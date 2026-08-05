@@ -13,7 +13,7 @@ protocol/   Opcao 0x1E em IPv6 Destination Options (20 bytes), Scapy
 ml/         FTRL-Proximal, ARF (ADWIN) e DQN (NumPy) com interface comum
 ipsec/      Templates StrongSwan (ipsec.conf, secrets, pki.sh)
 attacks/    Cenarios C1-C4 (30 repeticoes) + gerador do dataset IPv6-EH
-eval/       Metricas (AUC/EER/TPR@FPR<=3%) + baselines academicos
+eval/       Metricas (AUC/EER/TPR@FPR<=3%) + baselines + simulador C1-C4 + stats
 tests/      pytest (protocol, ml, metricas, agentes, dataset)
 data/       Datasets publicos (CMU Keystroke, Balabit) e gerado (ipv6eh)
 ```
@@ -91,6 +91,36 @@ replay buffer, target network (soft update) e epsilon-greedy. Estado com
 10 dimensoes (5 confiancas de fator + contexto de risco) e 25 acoes no
 Ambiente real; aqui e validada num MDP sintetico de referencia
 (ml/dqn.synthetic_risk_mdp).
+
+## Simulacao local da campanha C1-C4 (eval/simulador.py)
+
+Reexecuta em um unico host a avaliacao do Cap. 8 sobre o dataset proprio,
+implementando o protocolo do Anexo B.4 (prever -> medir -> aprender,
+normalizacao z-score so no aquecimento, drift por janelas temporais):
+
+```bash
+# validacao rapida
+python -m eval.simulador --reps 3 --eventos 12000 --warm 1000
+# campanha da tese (30 repeticoes; ~1h40m)
+python -m eval.simulador --reps 30 --eventos 20000 --warm 2000
+```
+
+Saidas em `eval/results/` (`simulacao_det.csv`, `simulacao_dqn.csv`,
+`simulacao_drift.csv`, `SIMULACAO.md`):
+
+- **Detectores** (FTRL, ARF, Ensemble): AUC/EER/TPR@FPR<=3% por cenario,
+  latencia P50/P95/P99 de inferencia e deteccoes de drift (ADWIN).
+- **DQN** (Agente Decisor): politica 10 dims / 3 acoes
+  (permitir/desafiar/bloquear) com recompensas assimetricas (fail-secure),
+  reportada em modo greedy; TPR/FPR operacionais e taxas de bloqueio/escalada.
+- **Estatistica**: teste de Friedman (com correcao de Iman-Davenport) e
+  post-hoc de Nemenyi sobre as repeticoes (`eval/stats.py`, NumPy puro).
+- **Protocolo 0x1E**: latencia de build/parse/pacote Scapy.
+
+Resultado da campanha (5 reps x 15k eventos, seed 42): FTRL e Ensemble
+atingem TPR>=95% com FPR<=3% em C1, C2 e C4; C3 (Replay) e o mais dificil
+(~0.73-0.76), coerente com a separabilidade do Anexo B. O Ensemble (media
+FTRL+ARF) domina os rankings nos cenarios em que Friedman rejeita H0.
 
 ## Notas
 
