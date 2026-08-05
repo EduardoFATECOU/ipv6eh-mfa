@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.ipynb_checkpoints/
+*.egg-info/
+dist/
+build/
+
+# Dados baixados (para nao inflar o repositorio)
+data/DSL-StrongPasswordData.csv
+data/balabit/
+data/balabit.zip
+
+# Dataset gerado (Anexo B) - pode ser regenerado com python -m attacks.generate_dataset
+data/ipv6eh/
+
+# Resultados e logs gerados
+logs/
+eval/results/
+
+# Segredos do StrongSwan
+ipsec/*.secrets

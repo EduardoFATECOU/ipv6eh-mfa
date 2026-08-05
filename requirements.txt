@@ -1,0 +1,14 @@
+numpy>=2.0
+scipy>=1.13
+scikit-learn>=1.4
+river>=0.25
+scapy>=2.5
+pytest>=8.0
+
+# Opcional (gera os .parquet do dataset IPv6-EH):
+pandas>=2.2
+pyarrow>=15.0
+
+# Opcional (apenas no ambiente de experimentacao, 4 VMs Ubuntu 24.04):
+# spade>=4.3        # plataforma XMPP dos agentes AM/AD/AA
+# strongswan        # via apt: ipsec (pacote do sistema, nao pip)
