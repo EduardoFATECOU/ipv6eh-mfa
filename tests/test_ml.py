@@ -121,3 +121,15 @@ def test_dqn_replay_e_learn():
         agent.remember(s, a, 1.0, s2, True)
         agent.learn()
     assert len(agent.buffer) == 200
+
+
+def test_dqn_learn_steps():
+    agent = DQNAgent(n_features=4, n_actions=2, batch_size=8, seed=2)
+    rng = np.random.default_rng(11)
+    for _ in range(300):
+        s = rng.uniform(0, 1, 4)
+        a = agent.act(s)
+        agent.remember(s, a, 1.0, rng.uniform(0, 1, 4), True)
+        loss = agent.learn(steps=3)
+        assert loss >= 0.0
+    assert agent.epsilon < 1.0

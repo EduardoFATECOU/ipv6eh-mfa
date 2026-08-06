@@ -144,24 +144,28 @@ class DQNAgent:
             bool(done),
         )
 
-    def learn(self, batch_size: Optional[int] = None) -> float:
+    def learn(self, batch_size: Optional[int] = None, steps: int = 1) -> float:
         bs = batch_size or self.batch_size
         batch = self.buffer.sample(bs)
         if batch is None:
             return 0.0
-        states, actions, rewards, next_states, dones = batch
-        states = np.stack(states)
-        next_states = np.stack(next_states)
-        rewards = np.asarray(rewards, dtype=np.float64)
-        actions = np.asarray(actions, dtype=np.int64)
-        dones = np.asarray(dones, dtype=np.float64)
+        loss = 0.0
+        for _ in range(steps):
+            batch = self.buffer.sample(bs)
+            if batch is None:
+                continue
+            states, actions, rewards, next_states, dones = batch
+            states = np.stack(states)
+            next_states = np.stack(next_states)
+            rewards = np.asarray(rewards, dtype=np.float64)
+            actions = np.asarray(actions, dtype=np.int64)
+            dones = np.asarray(dones, dtype=np.float64)
 
-        q_next = self.net.target_predict(next_states).max(axis=1)
-        targets = rewards + self.gamma * q_next * (1.0 - dones)
-        q_all = self.net.predict(states)
+            q_next = self.net.target_predict(next_states).max(axis=1)
+            targets = rewards + self.gamma * q_next * (1.0 - dones)
+            q_all = self.net.predict(states)
 
-        # Gradiente de MSE em relacao a Q da acao escolhida
-        for _ in range(1):
+            # Gradiente de MSE em relacao a Q da acao escolhida
             q_sa = q_all[np.arange(len(states)), actions]
             grad = 2.0 * (q_sa - targets) / max(bs, 1)
             dW = [np.zeros_like(w) for w in self.net.weights]
@@ -185,10 +189,11 @@ class DQNAgent:
             for j in range(len(self.net.weights)):
                 self.net.weights[j] -= self.lr * dW[j] / bs
                 self.net.biases[j] -= self.lr * dB[j] / bs
+            loss += float(np.mean((q_all[np.arange(len(states)), actions] - targets) ** 2))
 
         self.net.soft_update()
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
-        return float(np.mean((q_all[np.arange(len(states)), actions] - targets) ** 2))
+        return loss / max(steps, 1)
 
 
 def synthetic_risk_mdp():

@@ -86,11 +86,13 @@ def _tabela_agregada(rows: list, modelos: list) -> str:
 
 
 def _tabela_politica(dqn_rows: list) -> str:
-    out = ("\\begin{tabular}{l" + "r" * 4 + "}\n\\toprule\n"
-           "Cen\\'ario & TPR & FPR & Bloqueio & Escalada \\\\\n\\midrule\n")
+    out = ("\\begin{tabular}{l" + "r" * 6 + "}\n\\toprule\n"
+           "Cen\\'ario & TPR & FPR & Precis\\~ao & F1 & Bloqueio & Escalada \\\\\n\\midrule\n")
     for cenario in ("C1", "C2", "C3", "C4", "GLOBAL"):
-        out += (f"{cenario} & {_ms(dqn_rows, cenario, 'dqn', 'tpr_pol')} & "
-                f"{_ms(dqn_rows, cenario, 'dqn', 'fpr_pol')} & "
+        out += (f"{cenario} & {_ms(dqn_rows, cenario, 'dqn', 'tpr')} & "
+                f"{_ms(dqn_rows, cenario, 'dqn', 'fpr')} & "
+                f"{_ms(dqn_rows, cenario, 'dqn', 'precisao')} & "
+                f"{_ms(dqn_rows, cenario, 'dqn', 'f1')} & "
                 f"{_ms(dqn_rows, cenario, 'dqn', 'taxa_bloqueio')} & "
                 f"{_ms(dqn_rows, cenario, 'dqn', 'taxa_escalada')} \\\\\n")
     return out + "\\bottomrule\n\\end{tabular}\n"
@@ -158,8 +160,10 @@ def main(argv: list = None) -> int:
                   + "\\end{table}\n")
 
     partes.append("\\begin{table}[htbp]\n\\centering\n"
-                  f"\\caption{{Política do Agente Decisor (DQN) — ponto de operação greedy, "
-                  f"{n_rep} repetições.}}\n\\label{{tab:8-5}}\n"
+                  f"\\caption{{Política do Agente Decisor (DQN) — ponto de operação calibrado "
+                  f"(FPR$\\le 3\\%$) sobre o score $Q(bloquear)-Q(permitir)$, "
+                  f"{n_rep} repetições. Bloqueio/Escalada referem-se à política greedy reportada.}}\n"
+                  f"\\label{{tab:8-5}}\n"
                   + _tabela_politica(dqn)
                   + "\\end{table}\n")
 

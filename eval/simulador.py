@@ -46,7 +46,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from attacks.generate_dataset import GEOHASHES_DISTANTES, GEOHASHES  # noqa: E402
-from eval.metrics import resumo  # noqa: E402
+from eval.metrics import operating_point, resumo  # noqa: E402
 from eval.stats import comparar  # noqa: E402
 from ml.dqn import DQNAgent  # noqa: E402
 from ml.models import ARFModel, EnsembleModel, FTRLModel, featurize  # noqa: E402
@@ -83,7 +83,11 @@ MODELOS_DETECTORES = ("ftrl", "arf", "ensemble")
 JANELA = 5000
 #: Recompensas da politica do Agente Decisor (assimetricas, fail-secure).
 #: formato: (legitimo, ataque) para cada acao [permitir, desafiar, bloquear].
-RECOMPENSAS = {0: (1.0, -5.0), 1: (-0.3, -0.3), 2: (-2.0, 2.0)}
+#: Re-tune (09/08/2026): fail-secure menos agressivo e "desafiar" como acao
+#: intermediaria remunerada, para induzir politica escalonada (permitir ->
+#: desafiar -> bloquear) em vez de bloqueio precoce. Com gamma=0.0 o score
+#: Q(bloquear)-Q(permitir) segue monotono na probabilidade de ataque (AUC).
+RECOMPENSAS = {0: (1.0, -2.0), 1: (0.0, 0.3), 2: (-1.0, 1.5)}
 
 
 def _carregar_arquivo(arquivo: Path) -> np.ndarray:
@@ -265,7 +269,7 @@ def avaliar_dqn(X: np.ndarray, y: np.ndarray, warm: int, seed: int) -> dict:
         ftrl.learn_one(featurize(X[i], FEATS), int(y[i] != 0))
 
     agente = DQNAgent(n_features=10, n_actions=3, seed=seed,
-                      gamma=0.0, lr=3e-3, epsilon_decay=0.998)
+                      gamma=0.0, lr=5e-3, epsilon_decay=0.997)
     n = len(y)
     acoes = np.empty(n - warm, dtype=np.int64)
     scores = np.empty(n - warm, dtype=np.float64)
@@ -287,7 +291,7 @@ def avaliar_dqn(X: np.ndarray, y: np.ndarray, warm: int, seed: int) -> dict:
         legit = int(y[i]) == 0
         recompensa = RECOMPENSAS[a_train][0] if legit else RECOMPENSAS[a_train][1]
         agente.remember(st, a_train, recompensa, st, False)
-        agente.learn()
+        agente.learn(steps=3)
 
     p50, p95, p99 = _percentis(lat)
     return {"acoes": acoes, "scores": scores, "ybin": np.array(y[warm:] != 0, dtype=np.int64),
@@ -367,7 +371,15 @@ def _metricas_por_cenario(scores: np.ndarray, ybin: np.ndarray, cen: np.ndarray)
 
 def _metricas_politica(acoes: np.ndarray, scores: np.ndarray, ybin: np.ndarray,
                        cen: np.ndarray) -> dict:
-    """Metricas operacionais da politica: TPR/FPR, taxas de bloqueio/escalada e AUC."""
+    """Metricas da politica do Agente Decisor.
+
+    Dois pontos de vista:
+      - politica greedy reportada (tpr_pol/fpr_pol) e as taxas de bloqueio e
+        escalada (comportamento operacional do agente);
+      - ponto de operacao calibrado (tpr/fpr/precisao/recall/f1/auc) usando o
+        score Q(bloquear)-Q(permitir) com FPR <= 3%, igual ao dos detectores,
+        para comparacao justa (QP4).
+    """
     out = {}
     leg = ybin == 0
     ataque = ybin == 1
@@ -376,17 +388,29 @@ def _metricas_politica(acoes: np.ndarray, scores: np.ndarray, ybin: np.ndarray,
         ata = cen == c
         if ata.sum() == 0 or leg.sum() == 0:
             continue
-        tpr = float(detec[ata].mean())
-        fpr = float(detec[leg].mean())
-        bloc = float((acoes == 2).mean())
-        esc = float((acoes == 1).mean())
-        out[f"C{c}"] = {"tpr_pol": tpr, "fpr_pol": fpr, "taxa_bloqueio": bloc,
-                        "taxa_escalada": esc}
-    tpr = float(detec[ataque].mean())
-    fpr = float(detec[leg].mean())
-    auc = resumo(scores, ybin)["auc"]
-    out["GLOBAL"] = {"tpr_pol": tpr, "fpr_pol": fpr, "taxa_bloqueio": float((acoes == 2).mean()),
-                     "taxa_escalada": float((acoes == 1).mean()), "auc": auc}
+        sc = np.concatenate([scores[ata], scores[leg]])
+        lb = np.concatenate([np.ones(ata.sum(), dtype=np.int64),
+                             np.zeros(leg.sum(), dtype=np.int64)])
+        r = resumo(sc, lb)
+        op = operating_point(sc, lb)
+        out[f"C{c}"] = {
+            "tpr": op["tpr"], "fpr": op["fpr"], "precisao": op["precisao"],
+            "recall": op["recall"], "f1": op["f1"], "auc": r["auc"],
+            "tpr_fpr3": r["tpr_fpr3"],
+            "tpr_pol": float(detec[ata].mean()), "fpr_pol": float(detec[leg].mean()),
+            "taxa_bloqueio": float((acoes == 2).mean()),
+            "taxa_escalada": float((acoes == 1).mean()),
+        }
+    r = resumo(scores, ybin)
+    op = operating_point(scores, ybin)
+    out["GLOBAL"] = {
+        "tpr": op["tpr"], "fpr": op["fpr"], "precisao": op["precisao"],
+        "recall": op["recall"], "f1": op["f1"], "auc": r["auc"],
+        "tpr_fpr3": r["tpr_fpr3"],
+        "tpr_pol": float(detec[ataque].mean()), "fpr_pol": float(detec[leg].mean()),
+        "taxa_bloqueio": float((acoes == 2).mean()),
+        "taxa_escalada": float((acoes == 1).mean()),
+    }
     return out
 
 
@@ -449,8 +473,9 @@ def executar(reps: int, n_total: int, warm: int, modelos: list, seed_base: int,
                    "precisao", "recall", "f1", "n_pos", "n_neg",
                    "drift", "lat_p50_us", "lat_p95_us", "lat_p99_us"], linhas_det)
     _escrever_csv(RESULTADOS / "simulacao_dqn.csv",
-                  ["rep", "modelo", "cenario", "tpr_pol", "fpr_pol", "taxa_bloqueio",
-                   "taxa_escalada", "auc", "lat_p95_us"], linhas_dqn)
+                  ["rep", "modelo", "cenario", "tpr", "fpr", "precisao", "recall", "f1",
+                   "auc", "tpr_fpr3", "tpr_pol", "fpr_pol", "taxa_bloqueio",
+                   "taxa_escalada", "lat_p95_us"], linhas_dqn)
     _escrever_csv(RESULTADOS / "simulacao_drift.csv",
                   ["rep", "modelo", "janela", "acuracia"], linhas_drift)
     return {"det": linhas_det, "dqn": linhas_dqn, "drift": linhas_drift}
@@ -487,15 +512,26 @@ def _tabela_detector(linhas: list, modelos: list, cenarios: list) -> str:
 
 
 def _tabela_politica(linhas: list, cenarios: list) -> str:
-    cab = "| Cenario | TPR | FPR | Taxa bloqueio | Taxa escalada | P95 (us) |\n|---|---:|---:|---:|---:|---:|\n"
-    out = cab
+    cab = ("| Cenario | TPR cal. | FPR cal. | Precisao | F1 | Bloqueio | Escalada | "
+           "P95 (us) |\n|---|---:|---:|---:|---:|---:|---:|---:|\n")
+    out = ("Ponto de operacao calibrado (FPR<=3%) sobre o score Q(bloquear)-Q(permitir), "
+           "mais a politica greedy reportada.\n\n" + cab)
     for cenario in cenarios:
-        tpr, _ = _media_std(linhas, cenario, "dqn", "tpr_pol")
-        fpr, _ = _media_std(linhas, cenario, "dqn", "fpr_pol")
+        tpr, _ = _media_std(linhas, cenario, "dqn", "tpr")
+        fpr, _ = _media_std(linhas, cenario, "dqn", "fpr")
+        prec, _ = _media_std(linhas, cenario, "dqn", "precisao")
+        f1, _ = _media_std(linhas, cenario, "dqn", "f1")
         bloc, _ = _media_std(linhas, cenario, "dqn", "taxa_bloqueio")
         esc, _ = _media_std(linhas, cenario, "dqn", "taxa_escalada")
         p95, _ = _media_std(linhas, cenario, "dqn", "lat_p95_us")
-        out += (f"| {cenario} | {tpr:.4f} | {fpr:.4f} | {bloc:.4f} | {esc:.4f} | {p95:.1f} |\n")
+        out += (f"| {cenario} | {tpr:.4f} | {fpr:.4f} | {prec:.4f} | {f1:.4f} | "
+                f"{bloc:.4f} | {esc:.4f} | {p95:.1f} |\n")
+    out += ("\n**Politica greedy (operacional):**\n\n"
+            "| Cenario | TPR | FPR |\n|---|---:|---:|\n")
+    for cenario in cenarios:
+        tpr, _ = _media_std(linhas, cenario, "dqn", "tpr_pol")
+        fpr, _ = _media_std(linhas, cenario, "dqn", "fpr_pol")
+        out += f"| {cenario} | {tpr:.4f} | {fpr:.4f} |\n"
     return out
 
 
