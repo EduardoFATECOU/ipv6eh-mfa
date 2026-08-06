@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from eval.metrics import eer, roc_auc, resumo, tpr_at_fpr
+from eval.metrics import eer, operating_point, roc_auc, resumo, tpr_at_fpr
 from ml.dqn import DQNAgent, demo_dqn, synthetic_risk_mdp
 from ml.models import ARFModel, EnsembleModel, FTRLModel, featurize
 
@@ -69,6 +69,31 @@ def test_metricas_perfeitas():
 def test_metricas_classes_ausentes():
     assert np.isnan(roc_auc([0.5, 0.4], [1, 1]))
     assert np.isnan(eer([0.5, 0.4], [1, 1]))
+
+
+def test_operating_point_qp4():
+    # positivos com score alto, negativos com score baixo: operando com FPR <= 3%
+    scores = np.concatenate([np.full(90, 0.8), np.full(90, 0.2)])
+    labels = np.concatenate([np.ones(90, dtype=np.int64), np.zeros(90, dtype=np.int64)])
+    op = operating_point(scores, labels, 0.03)
+    assert op["tpr"] == pytest.approx(1.0)
+    assert op["fpr"] <= 0.03
+    assert 0.0 < op["precisao"] <= 1.0
+    assert op["recall"] == pytest.approx(op["tpr"])
+    assert 0.0 < op["f1"] <= 1.0
+
+
+def test_operating_point_classe_unica():
+    op = operating_point([0.5, 0.4], [1, 1])
+    assert all(np.isnan(op[k]) for k in ("tpr", "fpr", "precisao", "recall", "f1"))
+
+
+def test_operating_point_sem_limiar():
+    # nenhum limiar atinge FPR <= 3% (todas as negativas com score alto)
+    scores = [0.9, 0.9, 0.9]
+    labels = [1, 0, 0]
+    op = operating_point(scores, labels, 0.03)
+    assert op["tpr"] == 0.0 or op["f1"] == 0.0
 
 
 def test_dqn_aprende():

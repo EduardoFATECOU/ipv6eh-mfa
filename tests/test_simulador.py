@@ -132,6 +132,8 @@ def test_friedman_rejeita_nula():
     assert f["k"] == 3 and f["n"] == 30
     assert f["rejeita_nula_05"] is True
     assert f["chi2_friedman"] > f["chi2_crit_05"]
+    assert f["p_chi2"] is not None and f["p_chi2"] < 0.05
+    assert f["p_f"] is not None and f["p_f"] < 0.05
 
 
 def test_nemenyi_cd():

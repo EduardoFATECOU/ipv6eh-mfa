@@ -55,26 +55,50 @@ def media_ranks(dados: np.ndarray) -> np.ndarray:
     return ranks.mean(axis=1)
 
 
+def _p_chi2(chi2: float, gl: int):
+    """p-valor da estatistica de Friedman (dist. chi-quadrado), se scipy."""
+    try:
+        from scipy.stats import chi2 as _chi2
+
+        return float(_chi2.sf(chi2, gl))
+    except ImportError:  # pragma: no cover - depende de scipy (opcional)
+        return None
+
+
+def _p_f(f: float, gl1: int, gl2: int):
+    """p-valor da correcao de Iman-Davenport (dist. F), se scipy."""
+    try:
+        from scipy.stats import f as _f
+
+        return float(_f.sf(f, gl1, gl2))
+    except ImportError:  # pragma: no cover - depende de scipy (opcional)
+        return None
+
+
 def friedman(dados: np.ndarray) -> dict:
     """Teste de Friedman: retorna chi2 (Friedman) e F (Iman-Davenport).
 
     ``dados`` deve ter shape (k, n) com k algoritmos e n repeticoes
-    (maior valor = melhor). Inclui a comparacao com o valor critico
-    chi2(alpha=0.05, k-1) para rejeicao da hipotese nula.
+    (maior valor = melhor). Inclui o valor critico chi2(alpha=0.05, k-1) e
+    os p-valores exatos (scipy) de chi2 e F para rejeicao da hipotese nula.
     """
     dados = np.asarray(dados, dtype=np.float64)
     k, n = dados.shape
     r = media_ranks(dados)
     chi2 = 12.0 * n / (k * (k + 1)) * (float(np.sum(r**2)) - k * (k + 1) ** 2 / 4.0)
-    f = (n - 1.0) * chi2 / (n * (k - 1.0) - chi2) if n * (k - 1) > chi2 else float("inf")
+    den = n * (k - 1.0) - chi2
+    f = (n - 1.0) * chi2 / den if den > 0 else float("inf")
     crit = CHI2_CRIT_05.get(k - 1)
+    gl1, gl2 = (k - 1), (k - 1) * (n - 1)
     return {
         "k": k,
         "n": n,
         "chi2_friedman": float(chi2),
         "f_imandavenport": float(f),
-        "gl": (k - 1, (k - 1) * (n - 1)),
+        "gl": (gl1, gl2),
         "chi2_crit_05": crit,
+        "p_chi2": _p_chi2(float(chi2), gl1),
+        "p_f": _p_f(float(f), gl1, gl2),
         "rejeita_nula_05": bool(crit is not None and chi2 > crit),
     }
 

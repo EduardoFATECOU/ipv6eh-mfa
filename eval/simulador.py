@@ -343,7 +343,9 @@ def medir_protocolo(n: int = 2000, seed: int = 42) -> dict:
 
 
 def _metricas_por_cenario(scores: np.ndarray, ybin: np.ndarray, cen: np.ndarray) -> dict:
-    """Resumo (auc/eer/tpr@fpr3) por cenario + global, sobre o fluxo avaliado."""
+    """Resumo (auc/eer/tpr@fpr3) + ponto de operacao QP4 por cenario e global."""
+    from eval.metrics import operating_point
+
     out = {}
     leg = ybin == 0
     for c in (1, 2, 3, 4):
@@ -353,8 +355,13 @@ def _metricas_por_cenario(scores: np.ndarray, ybin: np.ndarray, cen: np.ndarray)
         r = resumo(np.concatenate([scores[ata], scores[leg]]),
                    np.concatenate([np.ones(ata.sum(), dtype=np.int64),
                                    np.zeros(leg.sum(), dtype=np.int64)]))
-        out[f"C{c}"] = r
-    out["GLOBAL"] = resumo(scores, ybin)
+        op = operating_point(np.concatenate([scores[ata], scores[leg]]),
+                             np.concatenate([np.ones(ata.sum(), dtype=np.int64),
+                                             np.zeros(leg.sum(), dtype=np.int64)]))
+        out[f"C{c}"] = {**r, **op}
+    r = resumo(scores, ybin)
+    op = operating_point(scores, ybin)
+    out["GLOBAL"] = {**r, **op}
     return out
 
 
@@ -413,7 +420,9 @@ def executar(reps: int, n_total: int, warm: int, modelos: list, seed_base: int,
                 linhas_det.append({
                     "rep": rep, "modelo": nome, "cenario": cenario,
                     "auc": round(m["auc"], 4), "eer": round(m["eer"], 4),
-                    "tpr_fpr3": round(m["tpr_fpr3"], 4),
+                    "tpr": round(m["tpr"], 4), "fpr": round(m["fpr"], 4),
+                    "precisao": round(m["precisao"], 4), "recall": round(m["recall"], 4),
+                    "f1": round(m["f1"], 4), "tpr_fpr3": round(m["tpr_fpr3"], 4),
                     "n_pos": m["n_pos"], "n_neg": m["n_neg"],
                     "drift": det["drift"], "lat_p50_us": round(det["lat_p50_us"], 2),
                     "lat_p95_us": round(det["lat_p95_us"], 2),
@@ -436,7 +445,8 @@ def executar(reps: int, n_total: int, warm: int, modelos: list, seed_base: int,
     RESULTADOS = Path(resultados)
     RESULTADOS.mkdir(parents=True, exist_ok=True)
     _escrever_csv(RESULTADOS / "simulacao_det.csv",
-                  ["rep", "modelo", "cenario", "auc", "eer", "tpr_fpr3", "n_pos", "n_neg",
+                  ["rep", "modelo", "cenario", "auc", "eer", "tpr_fpr3", "tpr", "fpr",
+                   "precisao", "recall", "f1", "n_pos", "n_neg",
                    "drift", "lat_p50_us", "lat_p95_us", "lat_p99_us"], linhas_det)
     _escrever_csv(RESULTADOS / "simulacao_dqn.csv",
                   ["rep", "modelo", "cenario", "tpr_pol", "fpr_pol", "taxa_bloqueio",
@@ -455,7 +465,8 @@ def _media_std(linhas: list, cenario: str, modelo: str, campo: str) -> tuple:
 
 
 def _tabela_detector(linhas: list, modelos: list, cenarios: list) -> str:
-    cab = "| Modelo | AUC | EER | TPR@FPR<=3% | P95 (us) | Drift |\n|---|---:|---:|---:|---:|---:|\n"
+    cab = ("| Modelo | AUC | EER | TPR@FPR<=3% | Precisao | F1 | P95 (us) | Drift |\n"
+           "|---|---:|---:|---:|---:|---:|---:|---:|\n")
     blocos = []
     for cenario in cenarios:
         lin = f"**{cenario}**\n\n" + cab
@@ -463,10 +474,13 @@ def _tabela_detector(linhas: list, modelos: list, cenarios: list) -> str:
             auc_m, auc_s = _media_std(linhas, cenario, modelo, "auc")
             eer_m, eer_s = _media_std(linhas, cenario, modelo, "eer")
             tpr_m, tpr_s = _media_std(linhas, cenario, modelo, "tpr_fpr3")
+            prec_m, prec_s = _media_std(linhas, cenario, modelo, "precisao")
+            f1_m, f1_s = _media_std(linhas, cenario, modelo, "f1")
             p95_m, _ = _media_std(linhas, cenario, modelo, "lat_p95_us")
             drf_m, _ = _media_std(linhas, cenario, modelo, "drift")
             lin += (f"| {modelo.upper()} | {auc_m:.4f} ± {auc_s:.4f} | "
                     f"{eer_m:.4f} ± {eer_s:.4f} | {tpr_m:.4f} ± {tpr_s:.4f} | "
+                    f"{prec_m:.4f} ± {prec_s:.4f} | {f1_m:.4f} ± {f1_s:.4f} | "
                     f"{p95_m:.1f} | {drf_m:.1f} |\n")
         blocos.append(lin)
     return "\n\n".join(blocos)
@@ -494,8 +508,10 @@ def _tabela_friedman(linhas: list, modelos: list, cenario: str, campo: str) -> s
     for m in modelos:
         out += f"- {m.upper()}: rank medio {comp['ranks'][m]:.3f}\n"
     f = comp["friedman"]
+    p_chi = f["p_chi2"]
+    p_str = f"{p_chi:.4f}" if p_chi is not None else "n/d"
     out += (f"\n- chi2(Friedman) = {f['chi2_friedman']:.3f} "
-            f"(critico 0.05 = {f['chi2_crit_05']}) -> "
+            f"(critico 0.05 = {f['chi2_crit_05']}) | p = {p_str} -> "
             f"{'rejeita H0' if f['rejeita_nula_05'] else 'nao rejeita H0'}\n")
     out += f"- F (Iman-Davenport) = {f['f_imandavenport']:.3f}\n"
     out += f"- CD (Nemenyi, 0.05) = {comp['nemenyi_cd']:.3f}\n"

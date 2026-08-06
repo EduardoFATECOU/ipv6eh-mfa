@@ -84,6 +84,36 @@ def tpr_at_fpr(scores: Sequence[float], labels: Sequence[int], alvo: float = 0.0
     return float(melhor)
 
 
+def operating_point(scores: Sequence[float], labels: Sequence[int], alvo: float = 0.03) -> dict:
+    """TPR, FPR, Precisao, Recall e F1 no melhor limiar com FPR <= alvo (QP4).
+
+    Usado nas Tabelas 8.1-8.4, onde o sistema opera no ponto que atende
+    TPR > 95% com FPR < 3%. Retorna dict com as cinco metricas; zeros se
+    nenhum limiar atingir o FPR alvo.
+    """
+    scores, labels = _scores_labels(scores, labels)
+    vazio = {"tpr": 0.0, "fpr": 0.0, "precisao": 0.0, "recall": 0.0, "f1": 0.0}
+    if scores.size == 0 or (labels == 1).sum() == 0 or (labels == 0).sum() == 0:
+        return {k: float("nan") for k in vazio}
+    melhor = None
+    for t in np.unique(scores):
+        pred = (scores >= t).astype(np.int64)
+        tp = ((pred == 1) & (labels == 1)).sum()
+        fn = ((pred == 0) & (labels == 1)).sum()
+        fp = ((pred == 1) & (labels == 0)).sum()
+        tn = ((pred == 0) & (labels == 0)).sum()
+        fpr = fp / (fp + tn) if (fp + tn) else 1.0
+        if fpr <= alvo:
+            tpr = tp / (tp + fn) if (tp + fn) else 0.0
+            if melhor is None or tpr > melhor["tpr"]:
+                prec = tp / (tp + fp) if (tp + fp) else 0.0
+                rec = tpr
+                f1 = 2.0 * prec * rec / (prec + rec) if (prec + rec) else 0.0
+                melhor = {"tpr": float(tpr), "fpr": float(fpr), "precisao": float(prec),
+                          "recall": float(rec), "f1": float(f1)}
+    return melhor if melhor is not None else vazio
+
+
 def resumo(scores: Sequence[float], labels: Sequence[int]) -> dict:
     """Pacote de metricas para uma execucao (usado nas Tabelas 8.x)."""
     return {
