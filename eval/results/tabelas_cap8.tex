@@ -1,0 +1,194 @@
+% Tabelas do Cap. 8 geradas por eval/gerar_tabelas.py
+% 30 repeticoes; ponto de operacao TPR@FPR<=3\% (QP4).
+
+\begin{table}[htbp]
+\centering
+\caption{Roubo de Credenciais (C1) — detectores no ponto de operação do QP4 (FPR$\le 3\%$, média $\pm$ desvio padrão sobre 30 repetições).}
+\label{tab:8-1}
+\begin{tabular}{lrrrrrr}
+\toprule
+Algoritmo & TPR & FPR & Precis\~ao & Recall & F1 & AUC \\
+\midrule
+ARF & 0.9999 $\pm$ 0.0004 & 0.0300 $\pm$ 0.0000 & 0.7794 $\pm$ 0.0214 & 0.9999 $\pm$ 0.0004 & 0.8758 $\pm$ 0.0135 & 1.0000 $\pm$ 0.0001 \\
+Ensemble & 0.9998 $\pm$ 0.0005 & 0.0300 $\pm$ 0.0000 & 0.7794 $\pm$ 0.0214 & 0.9998 $\pm$ 0.0005 & 0.8758 $\pm$ 0.0135 & 0.9999 $\pm$ 0.0002 \\
+FTRL & 0.9996 $\pm$ 0.0012 & 0.0300 $\pm$ 0.0000 & 0.7793 $\pm$ 0.0214 & 0.9996 $\pm$ 0.0012 & 0.8757 $\pm$ 0.0135 & 0.9999 $\pm$ 0.0002 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Man-in-the-Middle (C2) — detectores no ponto de operação do QP4 (FPR$\le 3\%$, média $\pm$ desvio padrão sobre 30 repetições).}
+\label{tab:8-2}
+\begin{tabular}{lrrrrrr}
+\toprule
+Algoritmo & TPR & FPR & Precis\~ao & Recall & F1 & AUC \\
+\midrule
+ARF & 0.9824 $\pm$ 0.0091 & 0.0300 $\pm$ 0.0000 & 0.7770 $\pm$ 0.0277 & 0.9824 $\pm$ 0.0091 & 0.8674 $\pm$ 0.0181 & 0.9956 $\pm$ 0.0029 \\
+Ensemble & 0.9915 $\pm$ 0.0047 & 0.0300 $\pm$ 0.0000 & 0.7785 $\pm$ 0.0276 & 0.9915 $\pm$ 0.0047 & 0.8719 $\pm$ 0.0181 & 0.9977 $\pm$ 0.0020 \\
+FTRL & 0.9810 $\pm$ 0.0071 & 0.0300 $\pm$ 0.0000 & 0.7767 $\pm$ 0.0282 & 0.9810 $\pm$ 0.0071 & 0.8667 $\pm$ 0.0191 & 0.9970 $\pm$ 0.0017 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Replay de Autenticacao (C3) — detectores no ponto de operação do QP4 (FPR$\le 3\%$, média $\pm$ desvio padrão sobre 30 repetições).}
+\label{tab:8-3}
+\begin{tabular}{lrrrrrr}
+\toprule
+Algoritmo & TPR & FPR & Precis\~ao & Recall & F1 & AUC \\
+\midrule
+ARF & 0.6891 $\pm$ 0.0295 & 0.0300 $\pm$ 0.0000 & 0.7183 $\pm$ 0.0339 & 0.6891 $\pm$ 0.0295 & 0.7028 $\pm$ 0.0244 & 0.9096 $\pm$ 0.0139 \\
+Ensemble & 0.7567 $\pm$ 0.0180 & 0.0300 $\pm$ 0.0000 & 0.7369 $\pm$ 0.0322 & 0.7567 $\pm$ 0.0180 & 0.7462 $\pm$ 0.0195 & 0.9442 $\pm$ 0.0078 \\
+FTRL & 0.7230 $\pm$ 0.0187 & 0.0300 $\pm$ 0.0000 & 0.7280 $\pm$ 0.0335 & 0.7230 $\pm$ 0.0187 & 0.7251 $\pm$ 0.0207 & 0.9448 $\pm$ 0.0051 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Spoofing de Agente (C4) — detectores no ponto de operação do QP4 (FPR$\le 3\%$, média $\pm$ desvio padrão sobre 30 repetições).}
+\label{tab:8-4}
+\begin{tabular}{lrrrrrr}
+\toprule
+Algoritmo & TPR & FPR & Precis\~ao & Recall & F1 & AUC \\
+\midrule
+ARF & 0.9142 $\pm$ 0.0196 & 0.0300 $\pm$ 0.0000 & 0.7688 $\pm$ 0.0286 & 0.9142 $\pm$ 0.0196 & 0.8350 $\pm$ 0.0219 & 0.9825 $\pm$ 0.0043 \\
+Ensemble & 0.9679 $\pm$ 0.0071 & 0.0300 $\pm$ 0.0000 & 0.7789 $\pm$ 0.0266 & 0.9679 $\pm$ 0.0071 & 0.8629 $\pm$ 0.0176 & 0.9939 $\pm$ 0.0019 \\
+FTRL & 0.9630 $\pm$ 0.0074 & 0.0300 $\pm$ 0.0000 & 0.7780 $\pm$ 0.0267 & 0.9630 $\pm$ 0.0074 & 0.8604 $\pm$ 0.0176 & 0.9925 $\pm$ 0.0019 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{GLOBAL — detectores no ponto de operação do QP4, todos os cenários.}
+\label{tab:8-global}
+\begin{tabular}{lrrrrrr}
+\toprule
+Algoritmo & TPR & FPR & Precis\~ao & Recall & F1 & AUC \\
+\midrule
+ARF & 0.8943 $\pm$ 0.0143 & 0.0300 $\pm$ 0.0000 & 0.9286 $\pm$ 0.0063 & 0.8943 $\pm$ 0.0143 & 0.9111 $\pm$ 0.0079 & 0.9713 $\pm$ 0.0042 \\
+Ensemble & 0.9274 $\pm$ 0.0075 & 0.0300 $\pm$ 0.0000 & 0.9310 $\pm$ 0.0061 & 0.9274 $\pm$ 0.0075 & 0.9292 $\pm$ 0.0043 & 0.9836 $\pm$ 0.0023 \\
+FTRL & 0.9149 $\pm$ 0.0081 & 0.0300 $\pm$ 0.0000 & 0.9301 $\pm$ 0.0062 & 0.9149 $\pm$ 0.0081 & 0.9224 $\pm$ 0.0048 & 0.9832 $\pm$ 0.0018 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Política do Agente Decisor (DQN) — ponto de operação greedy, 30 repetições.}
+\label{tab:8-5}
+\begin{tabular}{lrrrr}
+\toprule
+Cen\'ario & TPR & FPR & Bloqueio & Escalada \\
+\midrule
+C1 & 0.9878 $\pm$ 0.0127 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
+C2 & 0.9679 $\pm$ 0.0274 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
+C3 & 0.7866 $\pm$ 0.0680 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
+C4 & 0.9671 $\pm$ 0.0190 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
+GLOBAL & 0.9265 $\pm$ 0.0209 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Friedman — estatística Q, p-valor e ranking médio (Demšar) sobre a AUC.}
+\label{tab:8-6}
+\begin{tabular}{ll}
+\toprule
+Cenário & Resultado \\
+\midrule
+
+C1 & $Q=0.067$, $p=0.9672$, $F=0.032$ \\
+  & $ranking$: ARF=2.033 / Ensemble=1.967 / FTRL=2.000 \\
+
+C2 & $Q=37.617$, $p=0.0000$, $F=48.736$ \\
+  & $ranking$: ARF=2.783 / Ensemble=1.200 / FTRL=2.017 \\
+
+C3 & $Q=45.600$, $p=0.0000$, $F=91.833$ \\
+  & $ranking$: ARF=3.000 / Ensemble=1.600 / FTRL=1.400 \\
+
+C4 & $Q=55.417$, $p=0.0000$, $F=350.636$ \\
+  & $ranking$: ARF=3.000 / Ensemble=1.083 / FTRL=1.917 \\
+
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Nemenyi — pares com diferença de ranks significativa (acima do CD).}
+\label{tab:8-7}
+\begin{tabular}{llrrc}
+\toprule
+Fonte & Alvo & $\Delta$Ranks & CD & Significativo \\
+\midrule
+ARF & Ensemble & 1.550 & 0.605 & sim \\
+ARF & FTRL & 1.450 & 0.605 & sim \\
+Ensemble & FTRL & 0.100 & 0.605 & n\~ao \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Resultados agregados por dimensão de métrica.}
+\label{tab:8-agreg}
+\begin{tabular}{lllrrr}
+\toprule
+M\'etrica & Cen\'ario & Algoritmo & M\'edia & DP & IC95\% \\
+\midrule
+TPR & C1 & ARF & 0.9999 & 0.0004 & $\pm 0.0001$ \\
+TPR & C1 & Ensemble & 0.9998 & 0.0005 & $\pm 0.0002$ \\
+TPR & C1 & FTRL & 0.9996 & 0.0012 & $\pm 0.0004$ \\
+TPR & C2 & ARF & 0.9824 & 0.0091 & $\pm 0.0033$ \\
+TPR & C2 & Ensemble & 0.9915 & 0.0047 & $\pm 0.0017$ \\
+TPR & C2 & FTRL & 0.9810 & 0.0071 & $\pm 0.0025$ \\
+TPR & C3 & ARF & 0.6891 & 0.0295 & $\pm 0.0106$ \\
+TPR & C3 & Ensemble & 0.7567 & 0.0180 & $\pm 0.0064$ \\
+TPR & C3 & FTRL & 0.7230 & 0.0187 & $\pm 0.0067$ \\
+TPR & C4 & ARF & 0.9142 & 0.0196 & $\pm 0.0070$ \\
+TPR & C4 & Ensemble & 0.9679 & 0.0071 & $\pm 0.0025$ \\
+TPR & C4 & FTRL & 0.9630 & 0.0074 & $\pm 0.0026$ \\
+FPR & C1 & ARF & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C1 & Ensemble & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C1 & FTRL & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C2 & ARF & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C2 & Ensemble & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C2 & FTRL & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C3 & ARF & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C3 & Ensemble & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C3 & FTRL & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C4 & ARF & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C4 & Ensemble & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+FPR & C4 & FTRL & 0.0300 & 0.0000 & $\pm 0.0000$ \\
+AUC & C1 & ARF & 1.0000 & 0.0001 & $\pm 0.0000$ \\
+AUC & C1 & Ensemble & 0.9999 & 0.0002 & $\pm 0.0001$ \\
+AUC & C1 & FTRL & 0.9999 & 0.0002 & $\pm 0.0001$ \\
+AUC & C2 & ARF & 0.9956 & 0.0029 & $\pm 0.0010$ \\
+AUC & C2 & Ensemble & 0.9977 & 0.0020 & $\pm 0.0007$ \\
+AUC & C2 & FTRL & 0.9970 & 0.0017 & $\pm 0.0006$ \\
+AUC & C3 & ARF & 0.9096 & 0.0139 & $\pm 0.0050$ \\
+AUC & C3 & Ensemble & 0.9442 & 0.0078 & $\pm 0.0028$ \\
+AUC & C3 & FTRL & 0.9448 & 0.0051 & $\pm 0.0018$ \\
+AUC & C4 & ARF & 0.9825 & 0.0043 & $\pm 0.0016$ \\
+AUC & C4 & Ensemble & 0.9939 & 0.0019 & $\pm 0.0007$ \\
+AUC & C4 & FTRL & 0.9925 & 0.0019 & $\pm 0.0007$ \\
+F1 & C1 & ARF & 0.8758 & 0.0135 & $\pm 0.0048$ \\
+F1 & C1 & Ensemble & 0.8758 & 0.0135 & $\pm 0.0048$ \\
+F1 & C1 & FTRL & 0.8757 & 0.0135 & $\pm 0.0048$ \\
+F1 & C2 & ARF & 0.8674 & 0.0181 & $\pm 0.0065$ \\
+F1 & C2 & Ensemble & 0.8719 & 0.0181 & $\pm 0.0065$ \\
+F1 & C2 & FTRL & 0.8667 & 0.0191 & $\pm 0.0068$ \\
+F1 & C3 & ARF & 0.7028 & 0.0244 & $\pm 0.0087$ \\
+F1 & C3 & Ensemble & 0.7462 & 0.0195 & $\pm 0.0070$ \\
+F1 & C3 & FTRL & 0.7251 & 0.0207 & $\pm 0.0074$ \\
+F1 & C4 & ARF & 0.8350 & 0.0219 & $\pm 0.0078$ \\
+F1 & C4 & Ensemble & 0.8629 & 0.0176 & $\pm 0.0063$ \\
+F1 & C4 & FTRL & 0.8604 & 0.0176 & $\pm 0.0063$ \\
+\bottomrule
+\end{tabular}
+\end{table}
