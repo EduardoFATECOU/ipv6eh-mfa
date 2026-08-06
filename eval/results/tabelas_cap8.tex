@@ -78,17 +78,17 @@ FTRL & 0.9149 $\pm$ 0.0081 & 0.0300 $\pm$ 0.0000 & 0.9301 $\pm$ 0.0062 & 0.9149 
 
 \begin{table}[htbp]
 \centering
-\caption{Política do Agente Decisor (DQN) — ponto de operação greedy, 30 repetições.}
+\caption{Política do Agente Decisor (DQN) — ponto de operação calibrado (FPR$\le 3\%$) sobre o score $Q(bloquear)-Q(permitir)$, 30 repetições. Bloqueio/Escalada referem-se à política greedy reportada.}
 \label{tab:8-5}
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrrrrr}
 \toprule
-Cen\'ario & TPR & FPR & Bloqueio & Escalada \\
+Cen\'ario & TPR & FPR & Precis\~ao & F1 & Bloqueio & Escalada \\
 \midrule
-C1 & 0.9878 $\pm$ 0.0127 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
-C2 & 0.9679 $\pm$ 0.0274 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
-C3 & 0.7866 $\pm$ 0.0680 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
-C4 & 0.9671 $\pm$ 0.0190 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
-GLOBAL & 0.9265 $\pm$ 0.0209 & 0.3061 $\pm$ 0.2060 & 0.2899 $\pm$ 0.0515 & 0.2050 $\pm$ 0.1472 \\
+C1 & 0.9789 $\pm$ 0.0201 & 0.0300 $\pm$ 0.0000 & 0.7756 $\pm$ 0.0221 & 0.8653 $\pm$ 0.0172 & 0.2799 $\pm$ 0.0281 & 0.0639 $\pm$ 0.0283 \\
+C2 & 0.9350 $\pm$ 0.0327 & 0.0300 $\pm$ 0.0000 & 0.7681 $\pm$ 0.0298 & 0.8430 $\pm$ 0.0262 & 0.2799 $\pm$ 0.0281 & 0.0639 $\pm$ 0.0283 \\
+C3 & 0.6218 $\pm$ 0.0392 & 0.0300 $\pm$ 0.0000 & 0.6969 $\pm$ 0.0374 & 0.6565 $\pm$ 0.0321 & 0.2799 $\pm$ 0.0281 & 0.0639 $\pm$ 0.0283 \\
+C4 & 0.9332 $\pm$ 0.0255 & 0.0300 $\pm$ 0.0000 & 0.7726 $\pm$ 0.0261 & 0.8449 $\pm$ 0.0188 & 0.2799 $\pm$ 0.0281 & 0.0639 $\pm$ 0.0283 \\
+GLOBAL & 0.8650 $\pm$ 0.0183 & 0.0300 $\pm$ 0.0000 & 0.9264 $\pm$ 0.0064 & 0.8945 $\pm$ 0.0103 & 0.2799 $\pm$ 0.0281 & 0.0639 $\pm$ 0.0283 \\
 \bottomrule
 \end{tabular}
 \end{table}
