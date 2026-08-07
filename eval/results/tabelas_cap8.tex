@@ -78,6 +78,23 @@ FTRL & 0.9149 $\pm$ 0.0081 & 0.0300 $\pm$ 0.0000 & 0.9301 $\pm$ 0.0062 & 0.9149 
 
 \begin{table}[htbp]
 \centering
+\caption{Comparação com baselines (OE6/QP4) — proposta versus MFA estática e Wang et al. (2023), agregado sobre todos os cenários.}
+\label{tab:8-baseline}
+\begin{tabular}{lrrrrll}
+\toprule
+Sistema & TPR & FPR & Precis\~ao & AUC & Observa\c c\~ao \\
+\midrule
+Proposta --- Ensemble & 0.9274 $\pm$ 0.0075 & 0.0300 $\pm$ 0.0000 & 0.9310 $\pm$ 0.0061 & 0.9836 $\pm$ 0.0023 & detec\c c\~ao cont\'inua por evento (30 reps) \\
+Proposta --- FTRL & 0.9149 $\pm$ 0.0081 & 0.0300 $\pm$ 0.0000 & 0.9301 $\pm$ 0.0062 & 0.9832 $\pm$ 0.0018 & detec\c c\~ao cont\'inua por evento (30 reps) \\
+Proposta --- DQN (calibrado) & 0.8650 $\pm$ 0.0183 & 0.0300 $\pm$ 0.0000 & 0.9264 $\pm$ 0.0064 & 0.9618 $\pm$ 0.0085 & pol\'itica do Agente Decisor (ponto de opera\c c\~ao) \\
+MFA est\'atica (senha+TOTP 30 min) & 0.0000 $\pm$ 0.0000 & 0.0000 $\pm$ 0.0000 & -- & -- & sem verifica\c c\~ao cont\'inua; TPR=0 no meio da sess\~ao \\
+Wang et al. (2023) & n/d & 0.021 & 0.967 & n/d & MFA adaptativa DL (12 features contextuais); m\'etricas reportadas no dataset deles \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
 \caption{Política do Agente Decisor (DQN) — ponto de operação calibrado (FPR$\le 3\%$) sobre o score $Q(bloquear)-Q(permitir)$, 30 repetições. Bloqueio/Escalada referem-se à política greedy reportada.}
 \label{tab:8-5}
 \begin{tabular}{lrrrrrr}

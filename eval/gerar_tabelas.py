@@ -98,6 +98,31 @@ def _tabela_politica(dqn_rows: list) -> str:
     return out + "\\bottomrule\n\\end{tabular}\n"
 
 
+def _tabela_baseline(rows: list, dqn_rows: list, baseline: list) -> str:
+    """Comparacao com baselines do OE6/QP4: proposta vs. MFA estatica e
+    Wang et al. (2023). Valores globais (todos os cenarios, 30 repeticoes)."""
+    out = ("\\begin{tabular}{l" + "r" * 4 + "ll}\n\\toprule\n"
+           "Sistema & TPR & FPR & Precis\\~ao & AUC & Observa\\c c\\~ao \\\\\n\\midrule\n")
+    g = "GLOBAL"
+    for nome in ("ensemble", "ftrl"):
+        out += (f"Proposta --- {NOM.get(nome, nome)} & "
+                f"{_ms(rows, g, nome, 'tpr')} & {_ms(rows, g, nome, 'fpr')} & "
+                f"{_ms(rows, g, nome, 'precisao')} & {_ms(rows, g, nome, 'auc')} & "
+                f"detec\\c c\\~ao cont\\'inua por evento (30 reps) \\\\\n")
+    out += (f"Proposta --- DQN (calibrado) & "
+            f"{_ms(dqn_rows, g, 'dqn', 'tpr')} & {_ms(dqn_rows, g, 'dqn', 'fpr')} & "
+            f"{_ms(dqn_rows, g, 'dqn', 'precisao')} & {_ms(dqn_rows, g, 'dqn', 'auc')} & "
+            f"pol\\'itica do Agente Decisor (ponto de opera\\c c\\~ao) \\\\\n")
+    out += (f"MFA est\\'atica (senha+TOTP 30 min) & "
+            f"{_ms(baseline, g, 'mfa_estatica', 'tpr')} & "
+            f"{_ms(baseline, g, 'mfa_estatica', 'fpr')} & "
+            f"-- & -- & sem verifica\\c c\\~ao cont\\'inua; TPR=0 no meio da sess\\~ao \\\\\n")
+    out += ("Wang et al. (2023) & n/d & 0.021 & 0.967 & n/d & "
+            "MFA adaptativa DL (12 features contextuais); "
+            "m\\'etricas reportadas no dataset deles \\\\\n")
+    return out + "\\bottomrule\n\\end{tabular}\n"
+
+
 def _tabela_friedman(rows: list, modelos: list, cenario: str, campo: str) -> str:
     matriz = np.array([[float(l[campo]) for l in rows
                         if l["cenario"] == cenario and l["modelo"] == m]
@@ -138,6 +163,7 @@ def main(argv: list = None) -> int:
     saida = Path(args.saida)
     rows = _ler(saida / "simulacao_det.csv")
     dqn = _ler(saida / "simulacao_dqn.csv")
+    baseline = _ler(saida / "baseline_estatica.csv")
     modelos = sorted({l["modelo"] for l in rows if l["modelo"] != "dqn"})
     n_rep = max(int(l["rep"]) for l in rows) + 1
 
@@ -157,6 +183,13 @@ def main(argv: list = None) -> int:
                   "\\caption{GLOBAL — detectores no ponto de operação do QP4, todos os cenários.}\n"
                   "\\label{tab:8-global}\n"
                   + _tabela_detectores(rows, modelos, "GLOBAL")
+                  + "\\end{table}\n")
+
+    partes.append("\\begin{table}[htbp]\n\\centering\n"
+                  "\\caption{Comparação com baselines (OE6/QP4) — proposta versus MFA estática "
+                  "e Wang et al. (2023), agregado sobre todos os cenários.}\n"
+                  "\\label{tab:8-baseline}\n"
+                  + _tabela_baseline(rows, dqn, baseline)
                   + "\\end{table}\n")
 
     partes.append("\\begin{table}[htbp]\n\\centering\n"
