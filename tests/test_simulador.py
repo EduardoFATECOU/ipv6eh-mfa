@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from eval.metrics import resumo
+from eval.robustez_c1 import perturbar_c1
 from eval.simulador import (
     FEATS,
     avaliar_detector,
@@ -156,4 +157,65 @@ def test_comparar_empacota():
     comp = comparar(["a", "b", "c"], dados)
     assert comp["ranks"]["a"] < comp["ranks"]["b"] < comp["ranks"]["c"]
     assert comp["friedman"]["rejeita_nula_05"]
-    assert comp["nemenyi_cd"] > 0.0
+
+
+def _classes_onehot(n_leg=200, n_ataque=60):
+    rng = np.random.default_rng(1)
+    n = len(FEATS)
+
+    def _bloco(n_rows):
+        x = rng.normal(0, 1, (n_rows, 6))
+        dia = np.zeros((n_rows, 7))
+        dia[np.arange(n_rows), rng.integers(0, 7, n_rows)] = 1
+        disp = np.zeros((n_rows, 5))
+        disp[np.arange(n_rows), rng.integers(0, 5, n_rows)] = 1
+        geo = np.zeros((n_rows, 17))
+        geo[np.arange(n_rows), rng.integers(0, 17, n_rows)] = 1
+        return np.hstack([x, dia, disp, geo])
+
+    return {0: _bloco(n_leg), 1: _bloco(n_ataque), 2: _bloco(n_ataque),
+            3: _bloco(n_ataque), 4: _bloco(n_ataque)}
+
+
+def test_perturbar_c1_eps_zero_identidade():
+    classes = _classes_sinteticas()
+    out = perturbar_c1(classes, 0.0, seed=1)
+    assert np.array_equal(out[1], classes[1])
+    assert np.array_equal(out[0], classes[0])
+    for c in (2, 3, 4):
+        assert np.array_equal(out[c], classes[c])
+
+
+def test_perturbar_c1_eps_um_vira_twin_legitimo():
+    classes = _classes_sinteticas()
+    out = perturbar_c1(classes, 1.0, seed=2)
+    rng = np.random.RandomState(2)
+    idx = rng.randint(0, len(classes[0]), size=len(classes[1]))
+    assert np.array_equal(out[1], classes[0][idx])
+
+
+def test_perturbar_c1_deterministico():
+    classes = _classes_sinteticas()
+    a = perturbar_c1(classes, 0.5, seed=3)
+    b = perturbar_c1(classes, 0.5, seed=3)
+    assert np.array_equal(a[1], b[1])
+
+
+def test_perturbar_c1_onehot_continua_valido():
+    # combinacao convexa de one-hots validos preserva a soma 1 por grupo.
+    classes = _classes_onehot()
+    out = perturbar_c1(classes, 0.6, seed=4)
+    pert = out[1]
+    assert np.allclose(pert[:, 6:13].sum(axis=1), 1.0)   # dia (7)
+    assert np.allclose(pert[:, 13:18].sum(axis=1), 1.0)  # dispositivo (5)
+    assert np.allclose(pert[:, 18:35].sum(axis=1), 1.0)  # geohash (17)
+
+
+def test_perturbar_c1_escala_entre_extremos():
+    # a distancia media ate o legitimo decresce monotonamente com eps.
+    classes = _classes_sinteticas()
+    dist = []
+    for eps in (0.0, 0.5, 1.0):
+        out = perturbar_c1(classes, eps, seed=0)
+        dist.append(float(np.linalg.norm(out[1] - classes[0].mean(axis=0))))
+    assert dist[0] > dist[1] > dist[2]

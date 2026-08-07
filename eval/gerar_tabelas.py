@@ -43,11 +43,12 @@ def _ler(caminho: Path) -> list:
         return list(csv.DictReader(fh))
 
 
-def _ms(rows: list, cenario: str, modelo: str, campo: str) -> str:
-    """Media +- DP (4 casas) de um campo por (cenario, modelo)."""
+def _ms(rows: list, cenario: str, modelo: str, campo: str, eps: float = None) -> str:
+    """Media +- DP (4 casas) de um campo por (cenario, modelo); com filtro eps."""
     v = [float(l[campo]) for l in rows
          if l["cenario"] == cenario and l["modelo"] == modelo
-         and l.get(campo) not in ("", "nan")]
+         and l.get(campo) not in ("", "nan")
+         and (eps is None or float(l.get("epsilon", float("nan"))) == eps)]
     if not v:
         return "--"
     m, s = float(np.mean(v)), float(np.std(v))
@@ -95,6 +96,21 @@ def _tabela_politica(dqn_rows: list) -> str:
                 f"{_ms(dqn_rows, cenario, 'dqn', 'f1')} & "
                 f"{_ms(dqn_rows, cenario, 'dqn', 'taxa_bloqueio')} & "
                 f"{_ms(dqn_rows, cenario, 'dqn', 'taxa_escalada')} \\\\\n")
+    return out + "\\bottomrule\n\\end{tabular}\n"
+
+
+def _tabela_robustez(rob_rows: list) -> str:
+    """Teste de robustez do C1: AUC/TPR@FPR<=3% por nivel de camuflagem (eps)."""
+    out = ("\\begin{tabular}{rrrrr}\n\\toprule\n"
+           "\\varepsilon & Modelo & AUC & TPR@FPR$\\le 3\\%$ & Precis\\~ao \\\\\n\\midrule\n")
+    eps_ord = sorted({float(l["epsilon"]) for l in rob_rows})
+    modelos = ("ftrl", "ensemble")
+    for eps in eps_ord:
+        for nome in modelos:
+            out += (f"{eps:.1f} & {NOM.get(nome, nome)} & "
+                    f"{_ms(rob_rows, 'C1', nome, 'auc', eps)} & "
+                    f"{_ms(rob_rows, 'C1', nome, 'tpr_fpr3', eps)} & "
+                    f"{_ms(rob_rows, 'C1', nome, 'precisao', eps)} \\\\\n")
     return out + "\\bottomrule\n\\end{tabular}\n"
 
 
@@ -164,6 +180,7 @@ def main(argv: list = None) -> int:
     rows = _ler(saida / "simulacao_det.csv")
     dqn = _ler(saida / "simulacao_dqn.csv")
     baseline = _ler(saida / "baseline_estatica.csv")
+    robust = _ler(saida / "robustez_c1.csv")
     modelos = sorted({l["modelo"] for l in rows if l["modelo"] != "dqn"})
     n_rep = max(int(l["rep"]) for l in rows) + 1
 
@@ -190,6 +207,14 @@ def main(argv: list = None) -> int:
                   "e Wang et al. (2023), agregado sobre todos os cenários.}\n"
                   "\\label{tab:8-baseline}\n"
                   + _tabela_baseline(rows, dqn, baseline)
+                  + "\\end{table}\n")
+
+    partes.append("\\begin{table}[htbp]\n\\centering\n"
+                  "\\caption{Robustez do cenário C1 — camuflagem do atacante (blend convexo "
+                  "com comportamento legítimo, nível $\\varepsilon$). AUC $\\to 0.5$ quando o "
+                  "ataque se torna indistinguível (controle em $\\varepsilon=1.0$).}\n"
+                  "\\label{tab:8-robustez}\n"
+                  + _tabela_robustez(robust)
                   + "\\end{table}\n")
 
     partes.append("\\begin{table}[htbp]\n\\centering\n"
