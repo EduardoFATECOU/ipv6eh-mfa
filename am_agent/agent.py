@@ -31,6 +31,9 @@ except ImportError:  # pragma: no cover - ambiente sem SPADE
     AgentBase = object
 
 
+from protocol.replay import ReplayDefender
+
+
 class MonitorBehavior(PeriodicBehaviourBase):  # type: ignore[misc]
     """Coleta periodica das features e publicacao do estado no XMPP."""
 
@@ -39,6 +42,18 @@ class MonitorBehavior(PeriodicBehaviourBase):  # type: ignore[misc]
         credencial = agent.coletar_credencial()
         if credencial is None:
             return
+
+        # Verifica replay
+        if not agent.defender.is_valid(credencial):
+            LOGGER.warning("Ataque de replay detectado!")
+            features = agent.calcular_features()
+            msg = spade.message.Message(
+                to="decisor@localhost",
+                body=f"estado|{credencial.timestamp}|0.0|ataque=replay,{features}",
+            )
+            await self.send(msg)
+            return
+
         features = agent.calcular_features()
         msg = spade.message.Message(
             to="decisor@localhost",
@@ -55,6 +70,7 @@ class MonitorAgent(AgentBase):  # type: ignore[misc]
         super().__init__(jid, password)
         self._coleta = coleta or (lambda: None)
         self._features = features or (lambda: {})
+        self.defender = ReplayDefender()
 
     def coletar_credencial(self):
         """Decodifica a credencial MFA do trafego (injetado via Scapy)."""

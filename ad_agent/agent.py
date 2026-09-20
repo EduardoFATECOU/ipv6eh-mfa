@@ -81,7 +81,13 @@ class DecisorBehavior(CyclicBehaviourBase):  # type: ignore[misc]
             return
         agent: "DecisorAgent" = self.agent  # type: ignore[assignment]
         estado = agent.interpretar(msg.body)
-        decisao = agent.politica.decidir(estado)
+
+        # Trata ataque detectado (ex: replay)
+        if estado.get("ataque") == "replay":
+            decisao = {"acao": "bloquear", "confianca": 0.0, "justificativa": "replay detectado"}
+        else:
+            decisao = agent.politica.decidir(estado)
+
         LOGGER.info("decisao=%s conf=%.3f", decisao["acao"], decisao["confianca"])
         resposta = spade.message.Message(
             to="auditor@localhost",
