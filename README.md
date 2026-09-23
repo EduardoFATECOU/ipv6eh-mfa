@@ -6,10 +6,10 @@ baseada em cabecalhos IPv6 e IPSec (RFC 3692 / RFC 4727 / RFC 9099).
 ## Estrutura
 
 ```
-am_agent/   Agente Monitor: coleta da opcao MFA + features
-ad_agent/   Agente Decisor: politica plugavel (regras/FTRL/ARF/DQN)
+am_agent/   Agente Monitor: coleta da opcao MFA + features + ReplayDefender (C3)
+ad_agent/   Agente Decisor: politica plugavel (regras/FTRL/ARF/DQN) + tratamento de replay
 aa_agent/   Agente Auditoria: registro HMAC + metricas online
-protocol/   Opcao 0x1E em IPv6 Destination Options (20 bytes), Scapy
+protocol/   Opcao 0x1E em IPv6 Destination Options (20 bytes), Scapy + replay.py (nonce/timestamp)
 ml/         FTRL-Proximal, ARF (ADWIN) e DQN (NumPy) com interface comum
 ipsec/      Templates StrongSwan (ipsec.conf, secrets, pki.sh)
 attacks/    Cenarios C1-C4 (30 repeticoes) + gerador do dataset IPv6-EH
@@ -26,6 +26,11 @@ pytest tests -q
 python -m eval.run_all        # baselines CMU + Balabit -> eval/results/
 python -m eval.baseline_keystroke   # so CMU
 python -m eval.baseline_balabit     # so Balabit
+```
+
+Para deploy automatizado nas 4 VMs (AWS ou VirtualBox):
+```bash
+./deploy_vms.sh aws     # ou ./deploy_vms.sh local
 ```
 
 ## Dataset IPv6-EH (Anexo B)
