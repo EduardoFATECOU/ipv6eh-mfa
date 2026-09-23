@@ -1,0 +1,12 @@
+[Unit]
+Description=Decisor Agent Service
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/ipv6eh-mfa
+ExecStart=/usr/bin/python3 -m ad_agent.agent
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

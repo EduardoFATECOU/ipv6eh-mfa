@@ -1,0 +1,12 @@
+[Unit]
+Description=Auditor Agent Service
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/ipv6eh-mfa
+ExecStart=/usr/bin/python3 -m aa_agent.agent
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
