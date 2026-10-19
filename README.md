@@ -134,7 +134,7 @@ FTRL+ARF) domina os rankings nos cenarios em que Friedman rejeita H0.
 - O agente SPADE e importado apenas quando `pip install spade` estiver
   disponivel (ambiente de experimentacao); os testes nao dependem dele.
 - O pdf/docs da tese sao gerados em
-  `C:\Users\Eduardo\Downloads\Doutorado\` (ver `roteiro_tese.md`).
+  `D:\Armazenamento\Documentos - Eduardo\Doutorado\` (ver `roteiro_tese.md`).
 
 ## Licenca e dados
 
