@@ -22,14 +22,38 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y python3 python3-pip python3-venv strongswan strongswan-pki libstrongswan-standard-plugins libcharon-extra-plugins rsync
 ```
 
-## 3. Configuração da PKI (Segurança/IPSec)
-A autenticação entre agentes depende de certificados X.509.
-1.  Na sua máquina de controle, execute o script de PKI para gerar os certificados:
+## 3. Configuração da PKI e do IPSec (modo transporte)
+
+A autenticação entre agentes usa certificados X.509 (ECDSA P-256) e SAs
+IPSec em **modo transporte** (Cap. 5/7 e Anexo C).
+
+1.  Na máquina de controle (com `strongswan-pki` instalado), gere a PKI local:
     ```bash
     cd implementacao/ipsec
-    bash pki.sh
+    bash pki.sh --dry-run   # confere o plano
+    bash pki.sh             # ipsec/pki/: CA + 4 certificados
     ```
-2.  O script `deploy_vms.sh` já copia os certificados gerados para as pastas corretas nas VMs.
+    Saída: `ca-cert.pem`, `ca-key.pem` e `<vm>-{key,pub,cert}.pem` para
+    cliente/servidor/gateway/auditor. **Não versione** `ipsec/pki/`.
+2.  O `deploy_vms.sh` distribui a PKI e o `ipsec.conf` (não é preciso copiar
+    nada à mão): CA + 4 certificados em `/etc/ipsec.d/certs/`, chave privada
+    em `/etc/ipsec.d/private/` (modo 600), `ipsec.secrets` e o
+    `/etc/ipsec.conf` gerado por `gerar_conf.sh`. A chave da CA é instalada
+    apenas na VM4 (AA), que mantém a autoridade certificadora.
+3.  Endereços IPv6 do laboratório:
+
+    | VM | Nome | IPv6 |
+    |---|---|---|
+    | VM1 | cliente | `2001:db8:1::10/64` |
+    | VM2 | servidor | `2001:db8:2::11/64` |
+    | VM3 | gateway | `2001:db8:2::12/64` |
+    | VM4 | auditor | `2001:db8:2::13/64` |
+
+    Para o deploy configurá-los: `--ipv6-iface <interface>`.
+    Para pular o IPSec: `--skip-ipsec`.
+
+> **Modo transporte:** preserva os cabeçalhos de extensão IPv6 que carregam a
+> opção MFA (0x1E); o desafio MFA é feito pelo AD/AM, não pelo IKEv2.
 
 ## 4. Implantação Automatizada
 Execute a partir da **máquina de controle**. O script aceita dois modos:
@@ -45,7 +69,8 @@ Execute a partir da **máquina de controle**. O script aceita dois modos:
 ./deploy_vms.sh local --dry-run
 ```
 
-Opções: `--user`, `--key`, `--hosts "ip1 ip2 ip3 ip4"`, `--domain`, `--skip-deps`.
+Opções: `--user`, `--key`, `--hosts "ip1 ip2 ip3 ip4"`, `--domain`,
+`--ipv6-iface`, `--skip-deps`, `--skip-ipsec`.
 
 O deploy executa em cada VM: `rsync` do código, instalação via `apt`
 (`python3-venv`, `strongswan`, `chrony`), venv + `requirements-vm.txt`,

@@ -11,7 +11,7 @@ ad_agent/   Agente Decisor: politica plugavel (regras/FTRL/ARF/DQN) + tratamento
 aa_agent/   Agente Auditoria: registro HMAC + metricas online
 protocol/   Opcao 0x1E em IPv6 Destination Options (20 bytes), Scapy + replay.py (nonce/timestamp)
 ml/         FTRL-Proximal, ARF (ADWIN) e DQN (NumPy) com interface comum
-ipsec/      Templates StrongSwan (ipsec.conf, secrets, pki.sh)
+ipsec/      PKI (pki.sh) + template StrongSwan (modo transporte) + gerador por VM
 attacks/    Cenarios C1-C4 (30 repeticoes) + gerador do dataset IPv6-EH
 eval/       Metricas (AUC/EER/TPR@FPR<=3%) + baselines + simulador C1-C4 + runner + stats
 tests/      pytest (protocol, ml, metricas, agentes, dataset)
@@ -56,7 +56,40 @@ Deploy automatizado nas 4 VMs:
 
 O script sincroniza o codigo, instala dependencias (`apt` + `requirements-vm.txt` em
 venv), grava `/etc/mfa/agent.env` e habilita o servico `mfa-agent` em cada VM.
-Opcoes: `--user`, `--key`, `--hosts`, `--domain`, `--skip-deps`.
+Opcoes: `--user`, `--key`, `--hosts`, `--domain`, `--ipv6-iface`, `--skip-deps`,
+`--skip-ipsec`.
+
+## PKI e IPSec (modo transporte)
+
+A PKI e gerada uma vez na maquina de controle (com `strongswan-pki`) e o
+deploy a distribui:
+
+```bash
+cd implementacao/ipsec
+bash pki.sh --dry-run    # confere o plano
+bash pki.sh              # ipsec/pki/: CA + 4 certificados ECDSA P-256
+```
+
+`pki.sh` cria `ca-key.pem`, `ca-cert.pem` e `<vm>-{key,pub,cert}.pem` para
+cliente/servidor/gateway/auditor (SAN = FQDN + IPv6). A pasta `ipsec/pki/` e
+ignorada pelo git - nunca versione as chaves. A chave da CA vai apenas para a
+VM4 (AA), que mantem a autoridade certificadora (Cap. 7).
+
+O `deploy_vms.sh` copia a CA, os 4 certificados e a chave da VM para
+`/etc/ipsec.d/`, renderiza `/etc/ipsec.conf` com `gerar_conf.sh` e grava
+`/etc/ipsec.secrets`. A configuracao segue Cap. 5/7 e Anexo C: **ESP em modo
+transporte**, AES-256-GCM, lifetime 8 h / 100 MB e autenticacao mutua por
+X.509 (uma conexao por par, host-to-host).
+
+| VM | Nome | IPv6 | Papel |
+|---|---|---|---|
+| VM1 | cliente | `2001:db8:1::10` | AM |
+| VM2 | servidor | `2001:db8:2::11` | AM |
+| VM3 | gateway | `2001:db8:2::12` | AD |
+| VM4 | auditor | `2001:db8:2::13` | AA |
+
+Para configurar os enderecos durante o deploy: `--ipv6-iface enp0s8` (o nome
+da interface varia no VirtualBox/EC2). Para pular o IPSec: `--skip-ipsec`.
 
 ## Dataset IPv6-EH (Anexo B)
 

@@ -38,8 +38,13 @@ eval/results/*
 eval/results/*.log
 eval/results/smoke_*/
 
-# Segredos do StrongSwan
+# PKI gerada localmente (Fase 0.5) - nunca versionar chaves privadas
+ipsec/pki/
+ipsec/.ipsec.conf.*.tmp
+
+# Segredos do StrongSwan (gerados no deploy); o template nao tem segredo real
 ipsec/*.secrets
+!ipsec/ipsec.secrets
 
 # Chave HMAC do Agente Auditoria gerada pelo deploy
 .mfa_audit_key
