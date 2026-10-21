@@ -84,6 +84,29 @@ Após o deploy, verifique se tudo está operando corretamente:
     sudo ipsec status
     ```
 
+## 5.1. Runner dos experimentos (smoke test e campanha)
+
+Na máquina de controle, rode o smoke test de uma repetição:
+
+```bash
+python -m eval.experimentos_vms --cenario C1 --reps 1 --seed 42 \
+       --saida eval/results/smoke_vm
+```
+
+O CSV (`experimentos.csv`) traz TPR, FPR, AUC, EER, precisão/recall/F1,
+latência P50/P95/P99, CPU/RSS, bloqueios e escaladas — uma linha por
+repetição x modelo. Para analisar logs reais do AA, use a fonte `coleta`
+(alias `vm`):
+
+```bash
+python -m eval.experimentos_vms --cenario C1 --fonte coleta \
+       --audit-log /var/lib/mfa/logs/eventos.jsonl \
+       --rotulos rotulos.csv --saida eval/results/vm/C1
+```
+
+A campanha oficial (30 repetições por cenário) está na Fase 7 de
+`CHECKLIST_EXPERIMENTOS.md`.
+
 ## 6. Troubleshooting (Resolução de Problemas)
 
 | Problema | Causa Provável | Ação de Diagnóstico/Correção |

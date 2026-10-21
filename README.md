@@ -13,7 +13,7 @@ protocol/   Opcao 0x1E em IPv6 Destination Options (20 bytes), Scapy + replay.py
 ml/         FTRL-Proximal, ARF (ADWIN) e DQN (NumPy) com interface comum
 ipsec/      Templates StrongSwan (ipsec.conf, secrets, pki.sh)
 attacks/    Cenarios C1-C4 (30 repeticoes) + gerador do dataset IPv6-EH
-eval/       Metricas (AUC/EER/TPR@FPR<=3%) + baselines + simulador C1-C4 + stats
+eval/       Metricas (AUC/EER/TPR@FPR<=3%) + baselines + simulador C1-C4 + runner + stats
 tests/      pytest (protocol, ml, metricas, agentes, dataset)
 agent_entry.py  Entrypoint compartilhado (`python -m am_agent|ad_agent|aa_agent`)
 data/       Datasets publicos (CMU Keystroke, Balabit) e gerado (ipv6eh)
@@ -153,6 +153,34 @@ Resultado da campanha (5 reps x 15k eventos, seed 42): FTRL e Ensemble
 atingem TPR>=95% com FPR<=3% em C1, C2 e C4; C3 (Replay) e o mais dificil
 (~0.73-0.76), coerente com a separabilidade do Anexo B. O Ensemble (media
 FTRL+ARF) domina os rankings nos cenarios em que Friedman rejeita H0.
+
+## Runner dos experimentos C1-C4 (eval/experimentos_vms.py)
+
+Executa o smoke test ou a campanha e grava um CSV com TPR, FPR, AUC, EER,
+precisao/recall/F1, latencia (P50/P95/P99), CPU/RSS, bloqueios e escaladas
+(uma linha por repeticao x modelo):
+
+```bash
+# smoke test (1 repeticao)
+python -m eval.experimentos_vms --cenario C1 --reps 1 --seed 42 \
+       --saida eval/results/smoke_vm
+
+# campanha simulada (4 cenarios x 30 repeticoes)
+python -m eval.experimentos_vms --cenario ALL --reps 30 --seed 42 \
+       --saida eval/results/vm_2026-XX-XX/simulado
+```
+
+Fontes:
+
+| `--fonte` | Entrada | Uso |
+|---|---|---|
+| `simulado` (padrao) | dataset IPv6-EH (`data/ipv6eh/`) | referencia e smoke test |
+| `coleta` / `vm` | `--audit-log eventos.jsonl --rotulos rotulos.csv` | logs reais do AA |
+
+Na coleta, o score de risco e `1 - confianca` do AD (fallback: acao) e os
+campos opcionais `latencia_ms`, `cpu_pct`, `rss_mb` e `rep` do JSONL sao
+agregados por repeticao. O CSV de rotulos aceita `0..4`, `legitimo` e
+`C1..C4`.
 
 ## Notas
 
