@@ -16,6 +16,7 @@ attacks/    Cenarios C1-C4 (30 repeticoes) + gerador do dataset IPv6-EH
 eval/       Metricas (AUC/EER/TPR@FPR<=3%) + baselines + simulador C1-C4 + runner + stats
 tests/      pytest (protocol, ml, metricas, agentes, dataset)
 agent_entry.py  Entrypoint compartilhado (`python -m am_agent|ad_agent|aa_agent`)
+verificar_ambiente.sh  Auditoria do ambiente das VMs (Fase 0.7, exit 0 = pronto)
 data/       Datasets publicos (CMU Keystroke, Balabit) e gerado (ipv6eh)
 ```
 
@@ -90,6 +91,31 @@ X.509 (uma conexao por par, host-to-host).
 
 Para configurar os enderecos durante o deploy: `--ipv6-iface enp0s8` (o nome
 da interface varia no VirtualBox/EC2). Para pular o IPSec: `--skip-ipsec`.
+
+## Verificacao do ambiente (Fase 0.7)
+
+Rode em cada VM (de preferencia com `sudo`, para ler `/etc/mfa` e o IPSec):
+
+```bash
+bash verificar_ambiente.sh
+bash verificar_ambiente.sh --skip-xmpp   # Prosody ainda nao configurado (Fase 0.3)
+```
+
+O script audita sete blocos: **sistema** (distro, kernel, Python >= 3.10, RAM,
+disco), **dependencias** (`spade`, `scapy`, `sklearn`, `river`, `psutil`,
+`tensorflow`), **agente** (`/etc/mfa/agent.env`, `mfa-agent` ativo e `--check`
+do modulo), **IPv6** (endereco global e `ping6` nos peers), **NTP**
+(`chronyc tracking` com desvio <= 30 s, janela do ReplayDefender), **IPSec**
+(SAs `ESTABLISHED`, CHILD_SAs `INSTALLED`, permissoes de `ipsec.secrets` e das
+chaves) e **XMPP** (TCP 5222 no servidor).
+
+Cada linha e `[ OK ]`, `[AVISO]` ou `[FALHA]`. O codigo de saida e **0 somente
+se nao houver falhas**; avisos nao reprovam o ambiente. Principais opcoes:
+`--ipv6-iface`, `--ipv6-peers "ip1 ip2"`, `--xmpp-host`, `--esperadas 3`,
+`--max-offset 30` e `--skip-sistema|--skip-deps|--skip-agente|--skip-ipv6|--skip-ntp|--skip-ipsec|--skip-xmpp`.
+
+O `deploy_vms.sh` executa o verificador ao final de cada VM (informativo, nao
+interrompe o deploy); use `--skip-verificador` para omitir.
 
 ## Dataset IPv6-EH (Anexo B)
 

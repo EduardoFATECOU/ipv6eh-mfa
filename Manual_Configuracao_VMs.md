@@ -90,7 +90,25 @@ MFA_AUDIT_KEY=<32 bytes em hex>   # apenas no AA
 ```
 
 ## 5. Verificação e Monitoramento
-Após o deploy, verifique se tudo está operando corretamente:
+Após o deploy, verifique se tudo está operando corretamente.
+
+A forma mais rápida é o **verificador automático** (Fase 0.7), que audita sete
+blocos (sistema, dependências, agente, IPv6, NTP, IPSec e XMPP):
+
+```bash
+cd ~/ipv6eh-mfa
+sudo bash verificar_ambiente.sh               # ambiente completo
+sudo bash verificar_ambiente.sh --skip-xmpp   # sem XMPP (Fase 0.3 pendente)
+```
+
+Ele imprime `[ OK ]`, `[AVISO]` e `[FALHA]` por item e um resumo final; o código
+de saída é 0 somente quando não há falhas. Opções úteis: `--ipv6-iface`,
+`--ipv6-peers "ip1 ip2"`, `--xmpp-host`, `--esperadas` (SAs IPSec esperadas,
+padrão 3) e `--max-offset` (desvio NTP máximo, padrão 30 s — janela do
+ReplayDefender). O `deploy_vms.sh` já o executa ao final de cada VM
+(informativo); use `--skip-verificador` para omitir.
+
+Para inspeção manual:
 
 *   **Status do serviço (agente da VM):**
     ```bash
@@ -104,9 +122,9 @@ Após o deploy, verifique se tudo está operando corretamente:
     ```bash
     journalctl -u mfa-agent -f
     ```
-*   **Status do túnel IPSec (StrongSwan):**
+*   **Status das SAs IPSec (StrongSwan):**
     ```bash
-    sudo ipsec status
+    sudo ipsec statusall
     ```
 
 ## 5.1. Runner dos experimentos (smoke test e campanha)

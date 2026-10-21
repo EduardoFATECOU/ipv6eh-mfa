@@ -13,6 +13,7 @@
 #   --ipv6-iface <dev>  configura os IPv6 2001:db8:* na interface indicada
 #   --skip-deps         nao instala pacotes do sistema (apt)
 #   --skip-ipsec        nao distribui PKI nem configura o StrongSwan
+#   --skip-verificador  nao executa o verificar_ambiente.sh ao final
 #   --dry-run           mostra o plano sem executar nada
 #   -h, --help          ajuda
 #
@@ -56,6 +57,7 @@ IPV6_IFACE="${MFA_IPV6_IFACE:-}"
 DRY_RUN=0
 SKIP_DEPS=0
 SKIP_IPSEC=0
+SKIP_VERIFICADOR=0
 AVISO_PKI=0
 ARQUIVO_CHAVE_AUDIT=".mfa_audit_key"
 
@@ -73,6 +75,7 @@ while [[ $# -gt 0 ]]; do
         --dry-run) DRY_RUN=1; shift ;;
         --skip-deps) SKIP_DEPS=1; shift ;;
         --skip-ipsec) SKIP_IPSEC=1; shift ;;
+        --skip-verificador) SKIP_VERIFICADOR=1; shift ;;
         -h|--help) ajuda; exit 0 ;;
         *) echo "erro: opcao desconhecida '$1'" >&2; exit 2 ;;
     esac
@@ -294,6 +297,19 @@ deploy_host() {
         if (( ! SKIP_IPSEC )) && [[ -f "$AQUI/ipsec/pki/ca-cert.pem" ]]; then
             ssh "${SSH_OPTS[@]}" "$USUARIO@$host" \
                 "sudo ipsec statusall 2>/dev/null | head -20" || true
+        fi
+    fi
+
+    if (( ! SKIP_VERIFICADOR )); then
+        passo "verificador de ambiente (Fase 0.7)"
+        local argumentos=()
+        [[ -n "$IPV6_IFACE" ]] && argumentos+=(--ipv6-iface "$IPV6_IFACE")
+        (( SKIP_IPSEC )) && argumentos+=(--skip-ipsec)
+        if (( DRY_RUN )); then
+            echo "    [dry-run] bash verificar_ambiente.sh ${argumentos[*]:-}"
+        else
+            # Informativo: o resultado nao interrompe o deploy.
+            executar_ssh "$host" "cd ~/ipv6eh-mfa && bash verificar_ambiente.sh ${argumentos[*]:-}" || true
         fi
     fi
 }
