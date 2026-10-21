@@ -1,0 +1,10 @@
+# Dependencias do ambiente de experimentacao (4 VMs Ubuntu 24.04).
+# Instale com: python3 -m pip install -r requirements-vm.txt
+
+-r requirements.txt
+
+# Plataforma multiagente (transporte XMPP) usada por AM/AD/AA
+spade>=4.3
+
+# Metricas de processo (CPU/RSS) para o runner dos experimentos
+psutil>=5.9

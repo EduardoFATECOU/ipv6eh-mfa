@@ -15,6 +15,7 @@ sem alterar o agente.
 from __future__ import annotations
 
 import logging
+import os
 
 LOGGER = logging.getLogger("ad_agent")
 
@@ -90,7 +91,7 @@ class DecisorBehavior(CyclicBehaviourBase):  # type: ignore[misc]
 
         LOGGER.info("decisao=%s conf=%.3f", decisao["acao"], decisao["confianca"])
         resposta = spade.message.Message(
-            to="auditor@localhost",
+            to=agent.destino_auditor,
             body=f"decisao|{decisao['acao']}|{decisao['confianca']}|{decisao['justificativa']}",
         )
         await self.send(resposta)
@@ -99,9 +100,12 @@ class DecisorBehavior(CyclicBehaviourBase):  # type: ignore[misc]
 class DecisorAgent(AgentBase):  # type: ignore[misc]
     """Agente Decisor: esqueleto com politica plugavel."""
 
-    def __init__(self, jid, password, *, politica: PolicyStrategy = None):
+    def __init__(self, jid, password, *, politica: PolicyStrategy = None, destino_auditor=None):
         super().__init__(jid, password)
         self.politica = politica or RuleBasedPolicy()
+        self.destino_auditor = destino_auditor or os.environ.get(
+            "MFA_AA_JID", "auditor@localhost"
+        )
 
     def interpretar(self, corpo: str) -> dict:
         """Converte a mensagem do AM (pipe-separated) em estado dict."""

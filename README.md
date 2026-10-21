@@ -15,6 +15,7 @@ ipsec/      Templates StrongSwan (ipsec.conf, secrets, pki.sh)
 attacks/    Cenarios C1-C4 (30 repeticoes) + gerador do dataset IPv6-EH
 eval/       Metricas (AUC/EER/TPR@FPR<=3%) + baselines + simulador C1-C4 + stats
 tests/      pytest (protocol, ml, metricas, agentes, dataset)
+agent_entry.py  Entrypoint compartilhado (`python -m am_agent|ad_agent|aa_agent`)
 data/       Datasets publicos (CMU Keystroke, Balabit) e gerado (ipv6eh)
 ```
 
@@ -28,10 +29,27 @@ python -m eval.baseline_keystroke   # so CMU
 python -m eval.baseline_balabit     # so Balabit
 ```
 
-Para deploy automatizado nas 4 VMs (AWS ou VirtualBox):
+## Execucao dos agentes (4 VMs)
+
+Os agentes rodam como servico systemd (`systemd/am.service`, `ad.service`,
+`aa.service`) e usam SPADE sobre XMPP. No servidor de experimentos:
+
 ```bash
-./deploy_vms.sh aws     # ou ./deploy_vms.sh local
+python3 -m pip install -r requirements-vm.txt   # inclui spade e psutil
+python3 -m am_agent --check    # valida a configuracao sem conectar ao XMPP
+python3 -m am_agent            # inicia o Agente Monitor
+python3 -m ad_agent            # inicia o Agente Decisor
+python3 -m aa_agent            # inicia o Agente Auditoria
 ```
+
+Configuracao por variaveis de ambiente (ver `/etc/mfa/agent.env`):
+`MFA_JID`, `MFA_PASSWORD`, `MFA_LOG_LEVEL`, `MFA_AD_JID`, `MFA_AA_JID`,
+`MFA_AUDIT_DIR`, `MFA_AUDIT_KEY`.
+
+Deploy automatizado nas 4 VMs: o script atual cobre o caso basico (SSH por
+chave ja configurado, usuario `ubuntu`). Os modos `aws`/`local`, venv e
+instalacao de dependencias de sistema estao na Fase 0 de
+`CHECKLIST_EXPERIMENTOS.md`.
 
 ## Dataset IPv6-EH (Anexo B)
 

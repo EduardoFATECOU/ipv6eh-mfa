@@ -15,6 +15,7 @@ como daemon (systemd). Aqui ficam o esqueleto e os comportamentos SPADE.
 from __future__ import annotations
 
 import logging
+import os
 
 LOGGER = logging.getLogger("am_agent")
 
@@ -48,7 +49,7 @@ class MonitorBehavior(PeriodicBehaviourBase):  # type: ignore[misc]
             LOGGER.warning("Ataque de replay detectado!")
             features = agent.calcular_features()
             msg = spade.message.Message(
-                to="decisor@localhost",
+                to=agent.destino_decisor,
                 body=f"estado|{credencial.timestamp}|0.0|ataque=replay,{features}",
             )
             await self.send(msg)
@@ -56,7 +57,7 @@ class MonitorBehavior(PeriodicBehaviourBase):  # type: ignore[misc]
 
         features = agent.calcular_features()
         msg = spade.message.Message(
-            to="decisor@localhost",
+            to=agent.destino_decisor,
             body=f"estado|{credencial.timestamp}|{credencial.confidence}|{features}",
         )
         await self.send(msg)
@@ -66,10 +67,13 @@ class MonitorBehavior(PeriodicBehaviourBase):  # type: ignore[misc]
 class MonitorAgent(AgentBase):  # type: ignore[misc]
     """Agente Monitor: esqueleto com o fluxo principal de coleta."""
 
-    def __init__(self, jid, password, *, coleta=None, features=None):
+    def __init__(self, jid, password, *, coleta=None, features=None, destino_decisor=None):
         super().__init__(jid, password)
         self._coleta = coleta or (lambda: None)
         self._features = features or (lambda: {})
+        self.destino_decisor = destino_decisor or os.environ.get(
+            "MFA_AD_JID", "decisor@localhost"
+        )
         self.defender = ReplayDefender()
 
     def coletar_credencial(self):

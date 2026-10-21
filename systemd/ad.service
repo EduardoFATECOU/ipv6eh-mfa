@@ -1,12 +1,16 @@
 [Unit]
-Description=Decisor Agent Service
-After=network.target
+Description=Decisor Agent Service (AD)
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 User=ubuntu
 WorkingDirectory=/home/ubuntu/ipv6eh-mfa
-ExecStart=/usr/bin/python3 -m ad_agent.agent
-Restart=always
+EnvironmentFile=-/etc/mfa/agent.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -m ad_agent
+Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

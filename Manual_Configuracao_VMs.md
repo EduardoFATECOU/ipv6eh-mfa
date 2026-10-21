@@ -41,12 +41,34 @@ Execute este passo a partir da **sua máquina de controle** (onde está o códig
     ./deploy_vms.sh
     ```
 
+> **Estado atual:** o script cobre `rsync` + `pip install -r requirements.txt` + cópia dos
+> arquivos de systemd/StrongSwan. A instalação de `requirements-vm.txt` (SPADE/psutil), o
+> venv e o suporte a `--mode aws|local` estão previstos na Fase 0 de
+> `CHECKLIST_EXPERIMENTOS.md`.
+
+## 4.1. Variáveis de ambiente dos agentes
+
+Cada VM lê `/etc/mfa/agent.env` (via `EnvironmentFile=` no systemd):
+
+```bash
+MFA_JID=monitor@lars.local
+MFA_PASSWORD=senha_do_jid
+MFA_AD_JID=decisor@lars.local     # usado pelo AM
+MFA_AA_JID=auditor@lars.local     # usado pelo AD
+MFA_AUDIT_DIR=/var/lib/mfa/logs   # apenas no AA
+MFA_AUDIT_KEY=<32 bytes em hex>   # apenas no AA
+```
+
 ## 5. Verificação e Monitoramento
 Após o deploy, verifique se tudo está operando corretamente:
 
 *   **Status do serviço (agente da VM):**
     ```bash
     sudo systemctl status mfa-agent
+    ```
+*   **Validação rápida da configuração (sem conectar ao XMPP):**
+    ```bash
+    cd ~/ipv6eh-mfa && python3 -m am_agent --check
     ```
 *   **Logs do agente (para debug):**
     ```bash
