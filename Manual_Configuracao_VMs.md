@@ -32,19 +32,24 @@ A autenticação entre agentes depende de certificados X.509.
 2.  O script `deploy_vms.sh` já copia os certificados gerados para as pastas corretas nas VMs.
 
 ## 4. Implantação Automatizada
-Execute este passo a partir da **sua máquina de controle** (onde está o código-fonte):
+Execute a partir da **máquina de controle**. O script aceita dois modos:
 
-1.  Edite o arquivo `deploy_vms.sh` ajustando os IPs das VMs e o caminho da sua chave `.pem` (se estiver usando AWS).
-2.  Execute o script de deploy:
-    ```bash
-    chmod +x deploy_vms.sh
-    ./deploy_vms.sh
-    ```
+```bash
+# VirtualBox (ou hosts com chave SSH já configurada)
+./deploy_vms.sh local
 
-> **Estado atual:** o script cobre `rsync` + `pip install -r requirements.txt` + cópia dos
-> arquivos de systemd/StrongSwan. A instalação de `requirements-vm.txt` (SPADE/psutil), o
-> venv e o suporte a `--mode aws|local` estão previstos na Fase 0 de
-> `CHECKLIST_EXPERIMENTOS.md`.
+# AWS Academy (EC2) — usa a chave .pem
+./deploy_vms.sh aws --key ~/chave.pem
+
+# Conferir o plano sem executar
+./deploy_vms.sh local --dry-run
+```
+
+Opções: `--user`, `--key`, `--hosts "ip1 ip2 ip3 ip4"`, `--domain`, `--skip-deps`.
+
+O deploy executa em cada VM: `rsync` do código, instalação via `apt`
+(`python3-venv`, `strongswan`, `chrony`), venv + `requirements-vm.txt`,
+`/etc/mfa/agent.env` e o serviço `mfa-agent`.
 
 ## 4.1. Variáveis de ambiente dos agentes
 

@@ -8,7 +8,7 @@ User=ubuntu
 WorkingDirectory=/home/ubuntu/ipv6eh-mfa
 EnvironmentFile=-/etc/mfa/agent.env
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python3 -m ad_agent
+ExecStart=/home/ubuntu/ipv6eh-mfa/.venv/bin/python -m ad_agent
 Restart=on-failure
 RestartSec=5
 

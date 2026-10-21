@@ -40,3 +40,6 @@ eval/results/smoke_*/
 
 # Segredos do StrongSwan
 ipsec/*.secrets
+
+# Chave HMAC do Agente Auditoria gerada pelo deploy
+.mfa_audit_key

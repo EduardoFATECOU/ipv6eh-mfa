@@ -46,10 +46,17 @@ Configuracao por variaveis de ambiente (ver `/etc/mfa/agent.env`):
 `MFA_JID`, `MFA_PASSWORD`, `MFA_LOG_LEVEL`, `MFA_AD_JID`, `MFA_AA_JID`,
 `MFA_AUDIT_DIR`, `MFA_AUDIT_KEY`.
 
-Deploy automatizado nas 4 VMs: o script atual cobre o caso basico (SSH por
-chave ja configurado, usuario `ubuntu`). Os modos `aws`/`local`, venv e
-instalacao de dependencias de sistema estao na Fase 0 de
-`CHECKLIST_EXPERIMENTOS.md`.
+Deploy automatizado nas 4 VMs:
+
+```bash
+./deploy_vms.sh local                 # VirtualBox / SSH ja configurado
+./deploy_vms.sh aws --key chave.pem   # AWS Academy (EC2)
+./deploy_vms.sh local --dry-run       # mostra o plano sem executar
+```
+
+O script sincroniza o codigo, instala dependencias (`apt` + `requirements-vm.txt` em
+venv), grava `/etc/mfa/agent.env` e habilita o servico `mfa-agent` em cada VM.
+Opcoes: `--user`, `--key`, `--hosts`, `--domain`, `--skip-deps`.
 
 ## Dataset IPv6-EH (Anexo B)
 
