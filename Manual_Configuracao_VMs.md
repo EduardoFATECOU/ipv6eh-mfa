@@ -8,7 +8,7 @@ Este manual descreve o processo de preparação das quatro máquinas virtuais (U
 *   **SSH:** Configurar chave SSH da sua máquina de controle para acesso sem senha a todas as VMs (usuário `ubuntu`).
 
 ## 1.1 Considerações para AWS EC2 (AWS Academy)
-Se estiver utilizando AWS EC2 (`m7i-flex.large` ou similar):
+Se estiver utilizando AWS EC2 (`m7i-flex.large` — 2 vCPU, 8 GB RAM, 50 GB EBS — ou similar):
 *   **Segurança (Security Groups):** Configure uma regra de entrada no Security Group permitindo todo o tráfego proveniente do próprio grupo de segurança (tráfego interno liberado entre as 4 VMs).
 *   **IPs:** Utilize os **Endereços IPv4 Privados** das instâncias EC2 no script de deploy.
 *   **Autenticação:** Tenha o arquivo `.pem` da sua chave de acesso AWS disponível na máquina de controle.
