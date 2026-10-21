@@ -7,11 +7,62 @@ Este manual descreve o processo de preparação das quatro máquinas virtuais (U
 *   **Rede:** Todas as VMs devem se comunicar na mesma sub-rede (ex: `192.168.1.0/24`).
 *   **SSH:** Configurar chave SSH da sua máquina de controle para acesso sem senha a todas as VMs (usuário `ubuntu`).
 
-## 1.1 Considerações para AWS EC2 (AWS Academy)
-Se estiver utilizando AWS EC2 (`m7i-flex.large` — 2 vCPU, 8 GB RAM, 50 GB EBS — ou similar):
-*   **Segurança (Security Groups):** Configure uma regra de entrada no Security Group permitindo todo o tráfego proveniente do próprio grupo de segurança (tráfego interno liberado entre as 4 VMs).
-*   **IPs:** Utilize os **Endereços IPv4 Privados** das instâncias EC2 no script de deploy.
-*   **Autenticação:** Tenha o arquivo `.pem` da sua chave de acesso AWS disponível na máquina de controle.
+## 1.1 AWS EC2 (AWS Academy) — Plano A
+
+Instâncias `m7i-flex.large` (2 vCPU, 8 GB, 50 GB gp3) com **Ubuntu Server 24.04
+LTS**. O IPv6 é central na tese: sem IPv6 na VPC, use o Plano B (VirtualBox).
+
+### 1.1.1 Pré-requisitos da VPC (verificar antes de criar as VMs)
+1.  VPC → *Actions* → *Edit CIDRs* → **IPv6 CIDR block** (Amazon-provided).
+2.  Sub-rede → *Edit subnet settings* → **Enable auto-assign IPv6 address**.
+3.  Se o papel do Academy não permitir essas alterações, use o **Plano B** —
+    não adianta provisionar sem IPv6.
+
+### 1.1.2 Security Group (regras de entrada)
+
+| Tipo | Protocolo | Porta | Origem |
+|---|---|---|---|
+| SSH | TCP | 22 | seu IP (`x.x.x.x/32`) |
+| XMPP cliente | TCP | 5222 | SG do laboratório |
+| XMPP S2S | TCP | 5269 | SG do laboratório |
+| IKE | UDP | 500 | SG do laboratório |
+| NAT-T | UDP | 4500 | SG do laboratório |
+| ESP | **50** (custom) | — | SG do laboratório |
+| ICMPv6 | ICMPv6 | Echo request | SG do laboratório |
+
+> O console separa as abas **IPv4** e **IPv6**: crie as regras nas duas (o
+> `ping6` e o IPSec usam IPv6).
+
+### 1.1.3 Endereçamento
+
+*   **SSH (`--hosts`):** use o **IPv4 público** (ou o DNS público) de cada
+    instância; a máquina de controle está fora da VPC.
+*   **IPSec/XMPP (`--ipv6`):** use o **IPv6 atribuído pela VPC** de cada VM, na
+    ordem cliente, servidor, gateway, auditor. Nesse modo o deploy **não**
+    adiciona endereços à interface (eles já existem).
+*   Para anotar os IPv6: `ip -6 addr show scope global` em cada VM, ou o console.
+
+### 1.1.4 Certificados com os IPv6 reais
+
+```bash
+cd implementacao/ipsec
+bash pki.sh --ips "<ipv6-1> <ipv6-2> <ipv6-3> <ipv6-4>"
+```
+
+Os IDs (`leftid`/`rightid`) são os FQDNs (`cliente.lars.local` etc.), então a
+autenticação mútua não depende do IP; o SAN de IP serve para conferência.
+
+### 1.1.5 Deploy
+
+```bash
+cd implementacao
+./deploy_vms.sh aws --key ~/chave.pem \
+    --hosts "<ipv4-publico-1> <ipv4-publico-2> <ipv4-publico-3> <ipv4-publico-4>" \
+    --ipv6  "<ipv6-1> <ipv6-2> <ipv6-3> <ipv6-4>"
+```
+
+Se as instâncias forem paradas e reiniciadas, o IPv4 público pode mudar (o IPv6
+permanece com a ENI): repita o deploy com os novos `--hosts`.
 
 ## 2. Preparação Manual (Executar em CADA uma das 4 VMs)
 Antes de rodar o deploy, prepare o ambiente básico:
@@ -35,6 +86,7 @@ IPSec em **modo transporte** (Cap. 5/7 e Anexo C).
     ```
     Saída: `ca-cert.pem`, `ca-key.pem` e `<vm>-{key,pub,cert}.pem` para
     cliente/servidor/gateway/auditor. **Não versione** `ipsec/pki/`.
+    No AWS, gere com os IPv6 da VPC: `bash pki.sh --ips "<4 endereços>"`.
 2.  O `deploy_vms.sh` distribui a PKI e o `ipsec.conf` (não é preciso copiar
     nada à mão): CA + 4 certificados em `/etc/ipsec.d/certs/`, chave privada
     em `/etc/ipsec.d/private/` (modo 600), `ipsec.secrets` e o

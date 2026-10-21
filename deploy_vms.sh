@@ -10,7 +10,8 @@
 #   --key <arquivo>     chave .pem (obrigatoria no modo aws)
 #   --hosts "<lista>"   IPs/hosts separados por espaco (padrao: 192.168.1.10..13)
 #   --domain <dominio>  dominio XMPP/PKI (padrao: lars.local)
-#   --ipv6-iface <dev>  configura os IPv6 2001:db8:* na interface indicada
+#   --ipv6-iface <dev>  adiciona os IPv6 2001:db8:* na interface (VBox/lab)
+#   --ipv6 "<4 ips>"    usa estes IPv6 (AWS/VPC) sem adicionar enderecos
 #   --skip-deps         nao instala pacotes do sistema (apt)
 #   --skip-ipsec        nao distribui PKI nem configura o StrongSwan
 #   --skip-verificador  nao executa o verificar_ambiente.sh ao final
@@ -19,7 +20,7 @@
 #
 # Variaveis de ambiente equivalentes:
 #   MFA_USER, MFA_KEY, MFA_HOSTS, MFA_DOMAIN, MFA_PASSWORD, MFA_AUDIT_KEY,
-#   MFA_IPV6_IFACE
+#   MFA_IPV6_IFACE, MFA_IPV6
 #
 # Papeis (ordem dos hosts): client, server, gateway, auditor
 #   client  -> AM  (monitor1@dominio)   cliente   2001:db8:1::10
@@ -53,6 +54,7 @@ SENHA="${MFA_PASSWORD:-secret}"
 AUDIT_DIR="${MFA_AUDIT_DIR:-/var/lib/mfa/logs}"
 AUDIT_KEY="${MFA_AUDIT_KEY:-}"
 HOSTS_STR="${MFA_HOSTS:-192.168.1.10 192.168.1.11 192.168.1.12 192.168.1.13}"
+IPV6_STR="${MFA_IPV6:-}"
 IPV6_IFACE="${MFA_IPV6_IFACE:-}"
 DRY_RUN=0
 SKIP_DEPS=0
@@ -72,6 +74,7 @@ while [[ $# -gt 0 ]]; do
         --hosts)   HOSTS_STR="$2"; shift 2 ;;
         --domain)  DOMINIO="$2"; shift 2 ;;
         --ipv6-iface) IPV6_IFACE="$2"; shift 2 ;;
+        --ipv6)    IPV6_STR="$2"; shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         --skip-deps) SKIP_DEPS=1; shift ;;
         --skip-ipsec) SKIP_IPSEC=1; shift ;;
@@ -103,6 +106,18 @@ MODULOS=(am_agent am_agent ad_agent aa_agent)
 JIDS=(monitor1 monitor2 decisor auditor)
 NOMES=(cliente servidor gateway auditor)
 IPV6=(2001:db8:1::10 2001:db8:2::11 2001:db8:2::12 2001:db8:2::13)
+
+# No AWS os IPv6 sao os atribuidos pela VPC (nao 2001:db8:*): --ipv6 substitui
+# a tabela padrao e NAO adiciona enderecos (a interface ja os tem).
+if [[ -n "$IPV6_STR" ]]; then
+    # shellcheck disable=SC2206
+    IPV6_CUSTOM=($IPV6_STR)
+    if [[ ${#IPV6_CUSTOM[@]} -ne 4 ]]; then
+        echo "erro: --ipv6 exige 4 enderecos (um por VM, na ordem cliente servidor gateway auditor)" >&2
+        exit 2
+    fi
+    IPV6=("${IPV6_CUSTOM[@]}")
+fi
 
 SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -o BatchMode=yes)
 if [[ "$MODO" == "aws" ]]; then
@@ -184,7 +199,7 @@ copiar_arquivo() {
 }
 
 configurar_ipsec() {
-    local host="$1" nome="$2"
+    local host="$1" nome="$2" indice="$3"
 
     passo "certificados X.509 (PKI local)"
     if (( DRY_RUN )); then
@@ -226,8 +241,13 @@ configurar_ipsec() {
     fi
 
     local tmp="$AQUI/ipsec/.ipsec.conf.$nome.tmp"
+    local peers="" k
+    for k in "${!NOMES[@]}"; do
+        [[ "${NOMES[$k]}" == "$nome" ]] && continue
+        peers+="${NOMES[$k]}=${IPV6[$k]} "
+    done
     bash "$AQUI/ipsec/gerar_conf.sh" --host "$nome" --domain "$DOMINIO" \
-        --saida "$tmp" >/dev/null
+        --ipv6 "${IPV6[$indice]}" --peers "$peers" --saida "$tmp" >/dev/null
     copiar_arquivo "$tmp" "$host" "/etc/ipsec.conf" 644
     rm -f "$tmp"
 
@@ -282,7 +302,7 @@ deploy_host() {
     instalar_servico "$host" "$servico"
 
     if (( ! SKIP_IPSEC )); then
-        configurar_ipsec "$host" "$nome"
+        configurar_ipsec "$host" "$nome" "$i"
     fi
 
     passo "verificacao"
@@ -302,9 +322,14 @@ deploy_host() {
 
     if (( ! SKIP_VERIFICADOR )); then
         passo "verificador de ambiente (Fase 0.7)"
-        local argumentos=()
+        local argumentos=() k peers6=""
+        for k in "${!IPV6[@]}"; do
+            [[ "$k" == "$i" ]] && continue
+            peers6+="${IPV6[$k]} "
+        done
         [[ -n "$IPV6_IFACE" ]] && argumentos+=(--ipv6-iface "$IPV6_IFACE")
         (( SKIP_IPSEC )) && argumentos+=(--skip-ipsec)
+        argumentos+=(--ipv6-peers "$peers6")
         if (( DRY_RUN )); then
             echo "    [dry-run] bash verificar_ambiente.sh ${argumentos[*]:-}"
         else

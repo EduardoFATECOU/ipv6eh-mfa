@@ -57,8 +57,8 @@ Deploy automatizado nas 4 VMs:
 
 O script sincroniza o codigo, instala dependencias (`apt` + `requirements-vm.txt` em
 venv), grava `/etc/mfa/agent.env` e habilita o servico `mfa-agent` em cada VM.
-Opcoes: `--user`, `--key`, `--hosts`, `--domain`, `--ipv6-iface`, `--skip-deps`,
-`--skip-ipsec`.
+Opcoes: `--user`, `--key`, `--hosts`, `--domain`, `--ipv6`, `--ipv6-iface`,
+`--skip-deps`, `--skip-ipsec`, `--skip-verificador`.
 
 ## PKI e IPSec (modo transporte)
 
@@ -89,8 +89,10 @@ X.509 (uma conexao por par, host-to-host).
 | VM3 | gateway | `2001:db8:2::12` | AD |
 | VM4 | auditor | `2001:db8:2::13` | AA |
 
-Para configurar os enderecos durante o deploy: `--ipv6-iface enp0s8` (o nome
-da interface varia no VirtualBox/EC2). Para pular o IPSec: `--skip-ipsec`.
+Para configurar os enderecos durante o deploy: `--ipv6-iface enp0s8` (VirtualBox,
+onde os `2001:db8:*` sao adicionados a interface) ou `--ipv6 "<4 enderecos>"`
+(AWS, onde os IPv6 da VPC ja existem e sao apenas usados na PKI/IPSec). Para
+pular o IPSec: `--skip-ipsec`.
 
 ## Verificacao do ambiente (Fase 0.7)
 

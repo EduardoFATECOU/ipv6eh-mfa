@@ -157,4 +157,21 @@ def test_deploy_help_documenta_novas_flags():
     assert proc.returncode == 0, proc.stderr
     assert "--skip-ipsec" in proc.stdout
     assert "--ipv6-iface" in proc.stdout
+    assert "--ipv6" in proc.stdout
     assert "ipsec/pki.sh" in proc.stdout
+
+
+def test_deploy_dry_run_usa_ipv6_da_vpc():
+    """No AWS os IPv6 vem da VPC: --ipv6 usa os enderecos sem adiciona-los."""
+    ips = "2600:1f18:aa::10 2600:1f18:aa::11 2600:1f18:aa::12 2600:1f18:aa::13"
+    proc = _run(DEPLOY, "local", "--dry-run", "--ipv6", ips)
+    assert proc.returncode == 0, proc.stderr
+    assert "ip -6 addr" not in proc.stdout
+    assert "2600:1f18:aa::10" in proc.stdout
+    assert "--ipv6-peers 2600:1f18:aa::11 2600:1f18:aa::12 2600:1f18:aa::13" in proc.stdout
+
+
+def test_deploy_ipv6_invalido():
+    proc = _run(DEPLOY, "local", "--dry-run", "--ipv6", "a b")
+    assert proc.returncode == 2
+    assert "4 enderecos" in proc.stderr
