@@ -18,7 +18,25 @@ data/ipv6eh/
 
 # Resultados e logs gerados
 logs/
-eval/results/
+
+# Resultados: apenas os artefatos canonicos da tese sao versionados.
+# Logs de execucao e backups de smoke test ficam fora do repositorio.
+eval/results/*
+!eval/results/SIMULACAO.md
+!eval/results/RESUMO.md
+!eval/results/baseline_estatica.csv
+!eval/results/robustez_c1.csv
+!eval/results/robustez_c1.md
+!eval/results/simulacao_det.csv
+!eval/results/simulacao_dqn.csv
+!eval/results/simulacao_drift.csv
+!eval/results/tabelas_cap8.tex
+!eval/results/keystroke_ftrl.csv
+!eval/results/keystroke_arf.csv
+!eval/results/balabit_ftrl.csv
+!eval/results/balabit_arf.csv
+eval/results/*.log
+eval/results/smoke_*/
 
 # Segredos do StrongSwan
 ipsec/*.secrets
