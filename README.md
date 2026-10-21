@@ -111,7 +111,9 @@ python -m eval.simulador --reps 30 --eventos 20000 --warm 2000
 ```
 
 Saidas em `eval/results/` (`simulacao_det.csv`, `simulacao_dqn.csv`,
-`simulacao_drift.csv`, `SIMULACAO.md`):
+`simulacao_drift.csv`, `SIMULACAO.md`). Apenas os artefatos canonicos da tese
+sao versionados; logs de execucao (`*.log`) e backups de smoke test
+(`smoke_*/`) ficam fora do repositorio:
 
 - **Detectores** (FTRL, ARF, Ensemble): AUC/EER/TPR@FPR<=3% por cenario,
   latencia P50/P95/P99 de inferencia e deteccoes de drift (ADWIN).
